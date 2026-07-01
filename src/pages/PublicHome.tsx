@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { deriveMatchState, reconstructPairs, runRate } from '../lib/engine';
-import { supabase, supabaseEnabled, fetchDeliveries, fetchMatchToss } from '../lib/supabase';
+import { supabaseEnabled, fetchDeliveries, fetchMatchToss } from '../lib/supabase';
 import { ALL_MATCHES, computeMatchOverviews, computeGroupTables, getPairsForTeam, getMatchRecord, resolveSlot, slotLabel } from '../lib/matchData';
 import type { MatchStatus, MatchOverview, GroupTable, Bracket, MatchRecord } from '../lib/matchData';
 import { PLAYERS, TEAMS } from '../lib/seedData';
