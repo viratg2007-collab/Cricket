@@ -38,7 +38,7 @@ const SQUADS: { name: string; short: string; players: string[] }[] = [
   },
   {
     name: 'Mumbai Indians', short: 'MI',
-    players: ['Kishore Kakadiya', 'Bunty', 'Nimesh Modi', 'Manish Shah', 'Vimesh', 'Samir Seth', 'Samir Javeri', 'Rahul Zaveri', 'MK', 'Shashi Devani', 'Milan'],
+    players: ['Kishore Kakadiya', 'Bunty', 'Nimesh Modi', 'Manish Shah', 'Vimesh', 'Samir Seth', 'Samir Javeri', 'Rahul Zaveri', 'MK', 'Milan'],
   },
   {
     name: 'Sparkle Strikers', short: 'SPK',
