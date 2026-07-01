@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Backgrounds — lighter Ashoka navy */
+  --bg:            #0d1020;
+  --surface:       #151826;
+  --surface-2:     #1c2034;
+  --surface-3:     #232842;
+
+  /* Borders — warm saffron tint, clearly visible */
+  --border:        rgba(255,153,51,0.24);
+  --border-2:      rgba(255,153,51,0.12);
+
+  /* Text */
+  --text:          #ffffff;
+  --text-2:        #c8b090;
+  --text-3:        #7a6248;
+
+  /* India Saffron — primary accent (exact flag colour) */
+  --green:         #FF9933;
+  --green-2:       rgba(255,153,51,0.18);
+  --green-3:       rgba(255,153,51,0.09);
+
+  /* Gold — winner / points leader */
+  --amber:         #f5c53a;
+  --amber-2:       rgba(245,197,58,0.16);
+  --amber-3:       rgba(245,197,58,0.07);
+
+  /* Violet */
+  --purple:        #b09cf8;
+  --purple-2:      rgba(176,156,248,0.15);
+  --purple-3:      rgba(176,156,248,0.07);
+
+  /* Red */
+  --red:           #f46a6a;
+  --red-2:         rgba(244,106,106,0.15);
+  --red-3:         rgba(244,106,106,0.08);
+
+  /* Orange */
+  --orange:        #fb9a42;
+  --orange-2:      rgba(251,154,66,0.13);
+  --orange-3:      rgba(251,154,66,0.06);
+
+  /* India Green — boundaries, good economy */
+  --blue:          #1db85c;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+*::selection { background: var(--green-2); }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root { min-height: 100dvh; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+.live-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+
+.tap {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: transform 0.10s ease, opacity 0.10s ease;
+}
+.tap:active { transform: scale(0.92); opacity: 0.80; }
+
+.score-glow {
+  text-shadow: 0 0 48px rgba(255,153,51,0.35);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
