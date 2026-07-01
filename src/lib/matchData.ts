@@ -95,12 +95,12 @@ const DEFS: Def[] = [
   // ── Round 2 (play order: C1vC2, D2vD1, D3vD2, C1vC3, C2vC3, D1vD3) ──
   { n: 7,  round: 2, group: 'C', home: 'A1', away: 'B2', label: 'Group C', day: 'Sat 4 Jul', time: '5:45 PM', timeWindow: '5:45 – 7:25 PM' }, // C1 v C2
   { n: 8,  round: 2, group: 'D', home: 'A2', away: 'B1', label: 'Group D', day: 'Sat 4 Jul', time: '7:25 PM', timeWindow: '7:25 – 9:05 PM' }, // D2 v D1
-  { n: 9,  round: 2, group: 'D', home: 'A3', away: 'A2', label: 'Group D' }, // D3 v D2
-  { n: 10, round: 2, group: 'C', home: 'A1', away: 'B3', label: 'Group C' }, // C1 v C3
-  { n: 11, round: 2, group: 'C', home: 'B2', away: 'B3', label: 'Group C' }, // C2 v C3
-  { n: 12, round: 2, group: 'D', home: 'B1', away: 'A3', label: 'Group D' }, // D1 v D3
+  { n: 9,  round: 2, group: 'D', home: 'A3', away: 'A2', label: 'Group D', day: 'Sun 5 Jul', time: '7:00 AM',  timeWindow: '7:00 – 8:40 AM' }, // D3 v D2
+  { n: 10, round: 2, group: 'C', home: 'A1', away: 'B3', label: 'Group C', day: 'Sun 5 Jul', time: '11:30 AM', timeWindow: '11:30 AM – 1:10 PM' }, // C1 v C3
+  { n: 11, round: 2, group: 'C', home: 'B2', away: 'B3', label: 'Group C', day: 'Sun 5 Jul', time: '1:10 PM',  timeWindow: '1:10 – 2:50 PM' }, // C2 v C3
+  { n: 12, round: 2, group: 'D', home: 'B1', away: 'A3', label: 'Group D', day: 'Sun 5 Jul', time: '2:50 PM',  timeWindow: '2:50 – 4:30 PM' }, // D1 v D3
   // ── Final ──
-  { n: 13, round: 'final', home: 'CW', away: 'DW', label: 'Final' },
+  { n: 13, round: 'final', home: 'CW', away: 'DW', label: 'Final', day: 'Sun 5 Jul', time: '5:00 PM', timeWindow: '5:00 – 6:40 PM' },
 ];
 
 // ── Bracket (resolves the placeholder slots from actual results) ──────────────────
