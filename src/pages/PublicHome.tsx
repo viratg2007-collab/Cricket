@@ -582,9 +582,41 @@ export function PublicHome() {
                   {tables.filter(t => t.key === 'C' || t.key === 'D').map(gt => (
                     <GroupStandings key={gt.key} table={gt} />
                   ))}
+
+                  {/* Overall standings — decides the two finalists (top 2 by points, NRR tiebreak) */}
+                  {(() => {
+                    const overall = [...tables.filter(t => t.key === 'C' || t.key === 'D').flatMap(t => t.rows)]
+                      .sort((a, b) => b.points !== a.points ? b.points - a.points : Math.abs(b.nrr - a.nrr) > 1e-9 ? b.nrr - a.nrr : b.won - a.won);
+                    if (overall.length === 0) return null;
+                    return (
+                      <div style={{ background: 'var(--surface)', border: '1px solid rgba(245,197,58,0.30)', borderRadius: 16, overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px 8px' }}>
+                          <p style={{ color: 'rgba(245,197,58,0.9)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>🏆 Overall — Final Qualification</p>
+                          <p style={{ color: 'var(--text-3)', fontSize: 11, margin: '4px 0 0' }}>Top 2 by points reach the final (may be from the same group) · NRR breaks ties</p>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '26px 1fr 34px 34px 40px 50px', gap: 4, padding: '8px 16px', borderTop: '1px solid var(--border)', color: 'var(--text-3)', fontSize: 10, fontWeight: 700 }}>
+                          <span>#</span><span>Team</span><span style={{ textAlign: 'center' }}>P</span><span style={{ textAlign: 'center' }}>W</span><span style={{ textAlign: 'center' }}>Pts</span><span style={{ textAlign: 'right' }}>NRR</span>
+                        </div>
+                        {overall.map((row, i) => {
+                          const isFinalist = i < 2 && row.played > 0;
+                          return (
+                            <div key={row.team_id} style={{ display: 'grid', gridTemplateColumns: '26px 1fr 34px 34px 40px 50px', gap: 4, padding: '9px 16px', borderTop: '1px solid var(--border)', alignItems: 'center', background: isFinalist ? 'rgba(245,197,58,0.06)' : 'transparent' }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: isFinalist ? 'var(--amber)' : 'var(--text-3)' }}>{i + 1}</span>
+                              <span style={{ fontSize: 12.5, fontWeight: isFinalist ? 700 : 500, color: isFinalist ? 'var(--text)' : 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teamName(row.team_id)}{isFinalist && <span style={{ color: 'var(--amber)', fontSize: 9, fontWeight: 800, marginLeft: 5 }}>FINAL</span>}</span>
+                              <span style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>{row.played}</span>
+                              <span style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>{row.won}</span>
+                              <span style={{ textAlign: 'center', fontSize: 13, fontWeight: 800, color: isFinalist ? 'var(--amber)' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{row.points}</span>
+                              <span style={{ textAlign: 'right', fontSize: 11, color: 'var(--text-3)', fontVariantNumeric: 'tabular-nums' }}>{row.nrr >= 0 ? '+' : ''}{row.nrr.toFixed(2)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
                   {bracket.round2Complete && (
                     <div style={{ background: 'linear-gradient(135deg, rgba(245,197,58,0.12) 0%, rgba(245,197,58,0.04) 100%)', border: '1px solid rgba(245,197,58,0.30)', borderRadius: 14, padding: '14px 16px', textAlign: 'center' }}>
-                      <p style={{ color: 'rgba(245,197,58,0.85)', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 6px' }}>🏆 Final</p>
+                      <p style={{ color: 'rgba(245,197,58,0.85)', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 6px' }}>🏆 Final · Top 2 Overall</p>
                       <p style={{ color: 'var(--text)', fontSize: 15, fontWeight: 800, margin: 0 }}>
                         {teamName(bracket.finalHome)} <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>vs</span> {teamName(bracket.finalAway)}
                       </p>
@@ -751,7 +783,10 @@ function GroupStandings({ table }: { table: GroupTable }) {
       {table.rows.map((row, i) => {
         const nrrStr = row.played === 0 ? '—' : (row.nrr >= 0 ? '+' : '') + row.nrr.toFixed(3);
         const nrrColor = row.played === 0 ? 'var(--text-3)' : row.nrr > 0 ? 'var(--blue)' : row.nrr < 0 ? 'var(--red)' : 'var(--text-3)';
-        const qualifies = i === 0 && row.played > 0; // top of group
+        // Round-1 groups: highlight the leader (seeds as group 1st into Round 2).
+        // Round-2 groups (C/D): finalists come from the OVERALL table, not the group
+        // winner — so don't imply qualification here.
+        const qualifies = i === 0 && row.played > 0 && (table.key === 'A' || table.key === 'B');
         return (
           <div key={row.team_id} style={{
             display: 'grid', gridTemplateColumns: '16px 1fr 20px 20px 20px 20px 28px 50px', padding: '9px 12px', gap: 4,

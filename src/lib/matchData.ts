@@ -48,7 +48,9 @@ export function getPairsForTeam(teamId: string, mId: string): Pair[] {
 //   points carried forward.
 //   Group C = 1st of A + 2nd of B + 3rd of B
 //   Group D = 1st of B + 2nd of A + 3rd of A
-// Final: winner of C vs winner of D (super over if tied).
+// Final: the TWO highest-point teams overall (across all 6, points carried
+//   forward; tie-break NRR). Both finalists may come from the same group.
+//   (super over if the final itself is tied.)
 
 export const GROUP_A = [TEAM.KS, TEAM.ATS, TEAM.SS];   // Kashvat, Anita, Sparkle
 export const GROUP_B = [TEAM.AS, TEAM.MS, TEAM.NA];    // Anay, Modi, Nishant
@@ -58,7 +60,7 @@ export type GroupKey = 'A' | 'B' | 'C' | 'D';
 
 // A slot is either a concrete team id (round 1) or a placeholder resolved from the bracket.
 // Placeholders: A1,A2,A3 = round-1 group-A positions; B1..B3 = group-B positions;
-//               CW = winner of group C; DW = winner of group D.
+//               CW = 1st overall (most points of all 6); DW = 2nd overall.
 type Slot = string;
 
 export interface MatchRecord {
@@ -112,8 +114,8 @@ export interface Bracket {
   dRank: string[];
   round1Complete: boolean;
   round2Complete: boolean;
-  finalHome: string;      // CW (winner of C) or ''
-  finalAway: string;      // DW (winner of D) or ''
+  finalHome: string;      // 1st overall (most points across all 6) or ''
+  finalAway: string;      // 2nd overall or ''
 }
 
 const EMPTY_BRACKET: Bracket = {
@@ -201,11 +203,16 @@ function buildBracket(results: Record<number, MatchResult>): Bracket {
   const dRank = tableFor(groupD, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], results).map(r => r.team_id);
   const round2Complete = allComplete([7, 8, 9, 10, 11, 12], results);
 
+  // FINALISTS = the two teams with the most points OVERALL (all 6 teams, points
+  // carried forward across both rounds). They may come from the same group.
+  // Tie-break: points → NRR → wins (sortTable). NOT the winner of each group.
+  const overallRank = tableFor([...groupC, ...groupD], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], results).map(r => r.team_id);
+
   return {
     aRank, bRank, groupC, groupD, cRank, dRank,
     round1Complete: !!ovr || round1Complete, round2Complete,
-    finalHome: round2Complete ? cRank[0] : '',
-    finalAway: round2Complete ? dRank[0] : '',
+    finalHome: round2Complete ? overallRank[0] : '',
+    finalAway: round2Complete ? overallRank[1] : '',
   };
 }
 
@@ -224,7 +231,7 @@ export function slotLabel(slot: Slot): string {
   const map: Record<string, string> = {
     A1: '1st Group A', A2: '2nd Group A', A3: '3rd Group A',
     B1: '1st Group B', B2: '2nd Group B', B3: '3rd Group B',
-    CW: 'Winner Group C', DW: 'Winner Group D',
+    CW: '1st overall', DW: '2nd overall',
   };
   return map[slot] ?? slot;
 }
