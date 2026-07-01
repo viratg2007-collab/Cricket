@@ -277,11 +277,13 @@ function aggregate(deliveries: Delivery[]): Omit<TournamentStats, 'source'> {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function loadTournamentStats(scope: StatsScope = 'womens'): Promise<TournamentStats> {
+  // When Supabase is the backend it is the SINGLE SOURCE OF TRUTH — even when it
+  // returns zero rows (e.g. after a match/tournament reset). We must NOT fall back
+  // to a device's stale localStorage here, or a cleared match would keep showing
+  // its old leaderboard stats on the device that scored it.
   if (supabaseEnabled && supabase) {
     const deliveries = await fetchAllSupabaseDeliveries(scope);
-    if (deliveries.length > 0) {
-      return { ...aggregate(deliveries), source: 'supabase' };
-    }
+    return { ...aggregate(deliveries), source: 'supabase' };
   }
 
   const localDeliveries = readAllLocalDeliveries(scope);
