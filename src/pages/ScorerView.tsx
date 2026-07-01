@@ -67,6 +67,12 @@ function RunBtn({ n, onClick }: { n: number; onClick: () => void }) {
 
 export function ScorerView() {
   const { state, derived, dispatch, getPlayer, getTeam, syncStatus, queuedCount } = useGame();
+  const navigate = useNavigate();
+  const exitToDashboard = () => {
+    if (confirm('Exit to the match list? Your progress is saved and you can resume this match anytime.')) {
+      navigate(isMensId(state.matchId) ? '/mens/score' : '/score');
+    }
+  };
   const { phase, match } = state;
   const slot = state.activeInnings === 1 ? state.inn1 : state.inn2;
   const deliveries = slot.deliveries;
@@ -328,6 +334,15 @@ export function ScorerView() {
         }} />
 
         <div style={{ position: 'relative' }}>
+          {/* Exit to match list */}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
+            <button onClick={exitToDashboard} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-2)',
+              borderRadius: 20, padding: '5px 12px', color: S.text2, fontSize: 11, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}>← Exit to Match List</button>
+          </div>
           {/* Top row: team + live */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <p style={{ color: 'rgba(34,197,94,0.7)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>

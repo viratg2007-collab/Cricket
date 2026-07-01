@@ -239,9 +239,12 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
 
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px 8px', flexShrink: 0 }}>
-        <Link to={isMensId(matchId) ? '/mens' : '/womens'} style={{ color: 'var(--text-3)', fontSize: 12, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-          ← Matches
-        </Link>
+        <Link to={isMensId(matchId) ? '/mens' : '/womens'} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-2)',
+          borderRadius: 20, padding: '5px 12px', color: 'var(--text-2)', fontSize: 12, fontWeight: 600,
+          textDecoration: 'none',
+        }}>← Exit to {isMensId(matchId) ? "Men's" : "Women's"} matches</Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ background: 'white', borderRadius: 6, padding: '2px 4px', width: 26, height: 28, boxShadow: '0 1px 6px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <img src="/aicc-logo.jpg" alt="AICC" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
