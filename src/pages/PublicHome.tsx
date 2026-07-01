@@ -660,6 +660,17 @@ export function PublicHome() {
         )}
 
       </div>
+
+      {/* Footer / credits */}
+      <div style={{ borderTop: '1px solid var(--border)', padding: '18px 16px 26px', textAlign: 'center', flexShrink: 0 }}>
+        <p style={{ color: 'var(--text-3)', fontSize: 11, margin: 0, lineHeight: 1.6 }}>
+          Antwerp Indian Cricket Club · Mega Sports<br />
+          Title Sponsor: Swintu Diam bv
+        </p>
+        <p style={{ color: 'var(--text-3)', fontSize: 10, margin: '6px 0 0', opacity: 0.6 }}>
+          Built by Virat Gandhi
+        </p>
+      </div>
     </div>
   );
 }

@@ -49,6 +49,9 @@ export function LandingPage() {
         <p style={{ color: 'var(--text-3)', fontSize: 11, textAlign: 'center', margin: '28px 0 0' }}>
           Antwerp Indian Cricket Club · Mega Sports
         </p>
+        <p style={{ color: 'var(--text-3)', fontSize: 10, textAlign: 'center', margin: '6px 0 0', opacity: 0.6 }}>
+          Built by Virat Gandhi
+        </p>
       </div>
     </div>
   );

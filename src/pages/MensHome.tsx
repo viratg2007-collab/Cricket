@@ -224,6 +224,9 @@ export function MensHome() {
           Antwerp Indian Cricket Club · Mega Sports<br />
           Title Sponsor: Swintu Diam bv
         </p>
+        <p style={{ color: 'var(--text-3)', fontSize: 10, margin: '6px 0 0', opacity: 0.6 }}>
+          Built by Virat Gandhi
+        </p>
       </div>
     </div>
   );
