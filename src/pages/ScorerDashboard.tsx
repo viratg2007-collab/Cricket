@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Login, checkLocalAuth } from './Login';
 import { supabase, supabaseEnabled, softDeleteInnings, clearMatchToss } from '../lib/supabase';
 import { ALL_MATCHES, getMatchRecord, refreshBracketLocal, computeMatchOverviews, resolveSlot, slotLabel, getBracket, getOverride, saveOverride, GROUP_A, GROUP_B } from '../lib/matchData';
@@ -127,6 +127,11 @@ function Dashboard() {
       }}>
         <div style={{ position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)', width: 340, height: 240, background: 'radial-gradient(ellipse, rgba(255,153,51,0.12) 0%, transparent 62%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+            <Link to="/mens/score" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(56,132,255,0.14)', border: '1px solid rgba(56,132,255,0.35)', borderRadius: 20, padding: '6px 13px', color: 'var(--blue)', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>
+              ⇄ Score Men's +50
+            </Link>
+          </div>
           <p style={{ color: 'rgba(255,153,51,0.65)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 6px' }}>
             Scorer Panel
           </p>
