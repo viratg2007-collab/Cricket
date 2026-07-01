@@ -109,6 +109,7 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
   const [tourBatting, setTourBatting] = useState<{ player_id: string; runs: number; balls: number }[]>([]);
   const [par, setPar] = useState(80);
   const [connected, setConnected] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [tab, setTab] = useState<Tab>('live');
   const [activeInnings, setActiveInnings] = useState<1 | 2>(1);
@@ -163,20 +164,29 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
     load();
 
     if (supabaseEnabled && supabase) {
-      // Realtime = instant updates for connected viewers.
+      // Realtime = instant updates for connected viewers. The SAME channel also
+      // carries Presence, so the live viewer count needs no extra connection.
       const rt = { subscribed: false };
+      const presenceKey = `v-${Math.random().toString(36).slice(2, 10)}`;
       const ch = supabase
-        .channel(`viewer-${matchId}`)
+        .channel(`viewer-${matchId}`, { config: { presence: { key: presenceKey } } })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries', filter: `innings_id=eq.${innings1_id}` }, load)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries', filter: `innings_id=eq.${innings2_id}` }, load)
-        .subscribe(s => { rt.subscribed = s === 'SUBSCRIBED'; setConnected(s === 'SUBSCRIBED'); });
+        .on('presence', { event: 'sync' }, () => {
+          setViewerCount(Object.keys(ch.presenceState()).length);
+        })
+        .subscribe(async s => {
+          rt.subscribed = s === 'SUBSCRIBED';
+          setConnected(s === 'SUBSCRIBED');
+          if (s === 'SUBSCRIBED') { try { await ch.track({ at: Date.now() }); } catch { /* ignore */ } }
+        });
       // Adaptive fallback: if realtime isn't connected (e.g. beyond the free-tier
       // connection cap, or a dropped socket), poll fast (~2s) so those viewers still
       // feel live. When realtime IS connected, only poll every ~12s as a safety net —
       // keeps database load low while everyone stays up to date.
       let tick = 0;
       const backup = setInterval(() => { tick++; if (!rt.subscribed || tick % 6 === 0) load(); }, 2000);
-      return () => { supabase.removeChannel(ch); clearInterval(backup); };
+      return () => { supabase.removeChannel(ch); clearInterval(backup); setViewerCount(0); };
     } else {
       pollingRef.current = setInterval(load, 1500);
       return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
@@ -257,7 +267,12 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
             <img src="/aia-logo.jpg" alt="AIA" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {supabaseEnabled && connected && viewerCount > 0 && (
+            <span title="People watching this match live" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-2)', fontSize: 11, fontWeight: 600, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-2)', borderRadius: 20, padding: '3px 8px' }}>
+              👁 {viewerCount}
+            </span>
+          )}
           {supabaseEnabled
             ? connected
               ? <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--green)', fontSize: 11, fontWeight: 600 }}>
