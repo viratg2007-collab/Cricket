@@ -70,23 +70,26 @@ export interface MatchRecord {
   homeSlot: Slot;
   awaySlot: Slot;
   roundLabel: string;    // human label e.g. "Group A", "Group C", "Final"
+  day?: string;          // e.g. "Sat 4 Jul" (scheduled day)
+  time?: string;         // e.g. "7:00 AM" (scheduled start)
+  timeWindow?: string;   // e.g. "7:00 – 8:40 AM" (full slot)
 }
 
 const S = DEFAULT_SETTINGS;
 
-interface Def { n: number; round: Round; group?: GroupKey; home: Slot; away: Slot; label: string; }
+interface Def { n: number; round: Round; group?: GroupKey; home: Slot; away: Slot; label: string; day?: string; time?: string; timeWindow?: string; }
 
 // Fixtures in exact play order (per the official schedule).
 // Round 2 seeds: C1 = 1st Group A, C2 = 2nd Group B, C3 = 3rd Group B;
 //                D1 = 1st Group B, D2 = 2nd Group A, D3 = 3rd Group A.
 const DEFS: Def[] = [
-  // ── Round 1 (alternating Group A / Group B) ──
-  { n: 1, round: 1, group: 'A', home: TEAM.KS,  away: TEAM.ATS, label: 'Group A' }, // Kashvat v Anita
-  { n: 2, round: 1, group: 'B', home: TEAM.AS,  away: TEAM.MS,  label: 'Group B' }, // Anay v Modi
-  { n: 3, round: 1, group: 'A', home: TEAM.KS,  away: TEAM.SS,  label: 'Group A' }, // Kashvat v Sparkle
-  { n: 4, round: 1, group: 'B', home: TEAM.AS,  away: TEAM.NA,  label: 'Group B' }, // Anay v Nishant
-  { n: 5, round: 1, group: 'A', home: TEAM.ATS, away: TEAM.SS,  label: 'Group A' }, // Anita v Sparkle
-  { n: 6, round: 1, group: 'B', home: TEAM.MS,  away: TEAM.NA,  label: 'Group B' }, // Modi v Nishant
+  // ── Round 1 · Day 1 (Sat 4 Jul) — times from the official schedule ──
+  { n: 1, round: 1, group: 'A', home: TEAM.KS,  away: TEAM.ATS, label: 'Group A', day: 'Sat 4 Jul', time: '7:00 AM',  timeWindow: '7:00 – 8:40 AM' },   // Kashvat v Anita
+  { n: 2, round: 1, group: 'B', home: TEAM.AS,  away: TEAM.MS,  label: 'Group B', day: 'Sat 4 Jul', time: '8:40 AM',  timeWindow: '8:40 – 10:20 AM' },  // Anay v Modi
+  { n: 3, round: 1, group: 'A', home: TEAM.KS,  away: TEAM.SS,  label: 'Group A', day: 'Sat 4 Jul', time: '10:20 AM', timeWindow: '10:20 AM – 12:00 PM' }, // Kashvat v Sparkle
+  { n: 4, round: 1, group: 'B', home: TEAM.AS,  away: TEAM.NA,  label: 'Group B', day: 'Sat 4 Jul', time: '12:00 PM', timeWindow: '12:00 – 2:00 PM' },  // Anay v Nishant (opening ceremony)
+  { n: 5, round: 1, group: 'A', home: TEAM.ATS, away: TEAM.SS,  label: 'Group A', day: 'Sat 4 Jul', time: '2:00 PM',  timeWindow: '2:00 – 3:40 PM' },   // Anita v Sparkle
+  { n: 6, round: 1, group: 'B', home: TEAM.MS,  away: TEAM.NA,  label: 'Group B', day: 'Sat 4 Jul', time: '3:40 PM',  timeWindow: '3:40 – 5:20 PM' },   // Modi v Nishant
   // ── Round 2 (play order: C1vC2, D2vD1, D3vD2, C1vC3, C2vC3, D1vD3) ──
   { n: 7,  round: 2, group: 'C', home: 'A1', away: 'B2', label: 'Group C' }, // C1 v C2
   { n: 8,  round: 2, group: 'D', home: 'A2', away: 'B1', label: 'Group D' }, // D2 v D1
@@ -365,6 +368,9 @@ function buildRecord(def: Def, b: Bracket): MatchRecord {
     homeSlot: def.home,
     awaySlot: def.away,
     roundLabel: def.label,
+    day: def.day,
+    time: def.time,
+    timeWindow: def.timeWindow,
   };
 }
 

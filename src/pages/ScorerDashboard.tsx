@@ -329,6 +329,13 @@ function MatchCard({ rec, bracket, matchNum, status, scores, isNext, actionLabel
         )}
       </div>
 
+      {/* Scheduled time */}
+      {rec.time && !isDone && (
+        <p style={{ color: 'var(--green)', fontSize: 11, fontWeight: 700, margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          🕐 {rec.day ? `${rec.day} · ` : ''}{rec.timeWindow ?? rec.time}
+        </p>
+      )}
+
       {/* Teams + scores */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: (actionLabel || notReadyNote) ? 14 : 0 }}>
         {[

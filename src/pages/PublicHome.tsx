@@ -698,8 +698,13 @@ function FixtureRow({ rec, num, ov, bracket, navigate, showGroup }: {
         </span>
         {isLive && <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--green)', fontSize: 9, fontWeight: 700 }}><span className="live-dot" style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />LIVE</span>}
         {isDone && <span style={{ color: 'var(--text-3)', fontSize: 9 }}>Result ›</span>}
-        {!tappable && <span style={{ color: 'var(--text-3)', fontSize: 9 }}>Upcoming</span>}
+        {!tappable && !isLive && !isDone && <span style={{ color: 'var(--text-3)', fontSize: 9 }}>Upcoming</span>}
       </div>
+      {rec.time && (
+        <p style={{ color: 'var(--green)', fontSize: 10.5, fontWeight: 700, margin: '0 0 7px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          🕐 {rec.day ? `${rec.day} · ` : ''}{rec.timeWindow ?? rec.time}
+        </p>
+      )}
       {sides.map((s, idx) => {
         const isW = (w === 'home' && idx === 0) || (w === 'away' && idx === 1);
         return (
