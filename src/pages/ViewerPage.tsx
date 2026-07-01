@@ -124,36 +124,31 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
       const seq = ++loadSeqRef.current;
       const stale = () => seq !== loadSeqRef.current;
 
-      // Start with localStorage — always available on the scorer's device
-      let d1 = readLocalDeliveries(matchId, 1);
-      let d2 = readLocalDeliveries(matchId, 2);
+      let d1: Delivery[] = [], d2: Delivery[] = [];
 
-      // Read scorer-selected pairs from localStorage (more accurate than defaults)
-      const localPairs1 = readLocalPairs(matchId, 1);
-      const localPairs2 = readLocalPairs(matchId, 2);
-      if (localPairs1.length > 0) setInn1Pairs(localPairs1);
-      if (localPairs2.length > 0) setInn2Pairs(localPairs2);
-
-      // Overlay relay data if it has MORE deliveries (cross-device viewers)
-      const relay = await fetchFromRelay(matchId);
-      if (relay) {
-        if (relay.d1.length > d1.length) d1 = relay.d1;
-        if (relay.d2.length > d2.length) d2 = relay.d2;
-        // Relay pairs take priority over localStorage pairs
-        if (relay.pairs1 && relay.pairs1.length > 0) setInn1Pairs(relay.pairs1);
-        if (relay.pairs2 && relay.pairs2.length > 0) setInn2Pairs(relay.pairs2);
-        if (relay.toss) setToss(relay.toss);
-      }
-
-      // Fall back to Supabase if both sources are empty
-      if (d1.length === 0 && supabaseEnabled && supabase) {
+      if (supabaseEnabled && supabase) {
+        // Cloud is the SINGLE SOURCE OF TRUTH — read straight from it so every
+        // device (scorer or spectator) shows the same score, and the actual
+        // batting pairs are reconstructed from the deliveries themselves.
         [d1, d2] = await Promise.all([fetchDeliveries(innings1_id), fetchDeliveries(innings2_id)]);
-      }
-
-      // Toss comes from Supabase cross-device (relay is gated off when Supabase is on)
-      if (supabaseEnabled) {
         const t = await fetchMatchToss(matchId);
         if (t && !stale()) setToss(t);
+      } else {
+        // Local-network (relay) mode: this device's localStorage + relay overlay.
+        d1 = readLocalDeliveries(matchId, 1);
+        d2 = readLocalDeliveries(matchId, 2);
+        const localPairs1 = readLocalPairs(matchId, 1);
+        const localPairs2 = readLocalPairs(matchId, 2);
+        if (localPairs1.length > 0) setInn1Pairs(localPairs1);
+        if (localPairs2.length > 0) setInn2Pairs(localPairs2);
+        const relay = await fetchFromRelay(matchId);
+        if (relay) {
+          if (relay.d1.length > d1.length) d1 = relay.d1;
+          if (relay.d2.length > d2.length) d2 = relay.d2;
+          if (relay.pairs1 && relay.pairs1.length > 0) setInn1Pairs(relay.pairs1);
+          if (relay.pairs2 && relay.pairs2.length > 0) setInn2Pairs(relay.pairs2);
+          if (relay.toss) setToss(relay.toss);
+        }
       }
 
       if (stale()) return; // a newer load superseded this one — drop stale data

@@ -98,6 +98,21 @@ function buildLiveState(matchId: string, d1: Delivery[], d2: Delivery[], pairs1O
 }
 
 async function deriveLive(matchId: string): Promise<LiveMatchState | null> {
+  // When Supabase is the backend it is the SINGLE SOURCE OF TRUTH. Read the live
+  // card straight from the cloud so it always matches the Fixtures/Table and every
+  // viewer device — never a device's stale localStorage (which caused the home card
+  // and the fixture row to disagree).
+  if (supabaseEnabled) {
+    const rec = getMatchRecord(matchId);
+    let d1: Delivery[] = [], d2: Delivery[] = [];
+    if (rec) {
+      [d1, d2] = await Promise.all([fetchDeliveries(rec.innings1_id), fetchDeliveries(rec.innings2_id)]);
+    }
+    const toss = await fetchMatchToss(matchId);
+    return buildLiveState(matchId, d1, d2, null, null, toss);
+  }
+
+  // Local-network (relay) mode only: relay → this device's localStorage.
   let d1: Delivery[] = [], d2: Delivery[] = [];
   let pairs1Override: Pair[] | null = null, pairs2Override: Pair[] | null = null;
   let toss: LiveMatchState['toss'] = null;
@@ -113,15 +128,6 @@ async function deriveLive(matchId: string): Promise<LiveMatchState | null> {
   }
   if (d1.length === 0) d1 = readLocalDeliveries(matchId, 1);
   if (d2.length === 0) d2 = readLocalDeliveries(matchId, 2);
-  // Supabase fallback for cross-device viewers (no localStorage, relay disabled)
-  if (d1.length === 0 && supabaseEnabled) {
-    const rec = getMatchRecord(matchId);
-    if (rec) {
-      const [s1, s2] = await Promise.all([fetchDeliveries(rec.innings1_id), fetchDeliveries(rec.innings2_id)]);
-      d1 = s1; d2 = s2;
-    }
-  }
-  if (!toss && supabaseEnabled) toss = await fetchMatchToss(matchId);
   return buildLiveState(matchId, d1, d2, pairs1Override, pairs2Override, toss);
 }
 
