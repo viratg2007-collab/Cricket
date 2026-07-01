@@ -169,27 +169,17 @@ export function PublicHome() {
   useEffect(() => {
     refreshAll();
     const onVisible = () => { if (!document.hidden) refreshAll(); };
-
-    if (supabaseEnabled && supabase) {
-      // Single subscription to all delivery changes → full refresh (recomputes statuses too)
-      const ch = supabase
-        .channel('public-home-live')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries' }, () => { refreshAll(); })
-        .subscribe();
-      // Safety net: realtime can silently drop (sleep/network change) — back it with a slow poll + focus refresh
-      const backup = setInterval(refreshAll, 20000);
-      document.addEventListener('visibilitychange', onVisible);
-      window.addEventListener('focus', onVisible);
-      return () => {
-        supabase!.removeChannel(ch);
-        clearInterval(backup);
-        document.removeEventListener('visibilitychange', onVisible);
-        window.removeEventListener('focus', onVisible);
-      };
-    } else {
-      pollingRef.current = setInterval(refreshAll, 1500);
-      return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-    }
+    // The home page POLLS (no realtime socket) so the limited realtime connections
+    // are reserved for people actually watching a live match. A 5s poll is plenty
+    // for a summary card / standings, and refreshes instantly on tab focus.
+    pollingRef.current = setInterval(refreshAll, 5000);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   }, []);
 
 

@@ -168,13 +168,19 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
     load();
 
     if (supabaseEnabled && supabase) {
+      // Realtime = instant updates for connected viewers.
+      const rt = { subscribed: false };
       const ch = supabase
         .channel(`viewer-${matchId}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries', filter: `innings_id=eq.${innings1_id}` }, load)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries', filter: `innings_id=eq.${innings2_id}` }, load)
-        .subscribe(s => setConnected(s === 'SUBSCRIBED'));
-      // Safety net against dropped realtime (sleep / network change)
-      const backup = setInterval(load, 20000);
+        .subscribe(s => { rt.subscribed = s === 'SUBSCRIBED'; setConnected(s === 'SUBSCRIBED'); });
+      // Adaptive fallback: if realtime isn't connected (e.g. beyond the free-tier
+      // connection cap, or a dropped socket), poll fast (~2s) so those viewers still
+      // feel live. When realtime IS connected, only poll every ~12s as a safety net —
+      // keeps database load low while everyone stays up to date.
+      let tick = 0;
+      const backup = setInterval(() => { tick++; if (!rt.subscribed || tick % 6 === 0) load(); }, 2000);
       return () => { supabase.removeChannel(ch); clearInterval(backup); };
     } else {
       pollingRef.current = setInterval(load, 1500);
