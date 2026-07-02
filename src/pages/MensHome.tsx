@@ -417,8 +417,10 @@ function MatchRow({ base, num, overviews }: { base: typeof MENS_MATCHES[number];
 }
 
 function StandingsTable({ rows, finalists }: { rows: MensStandingRow[]; finalists: string[] }) {
+  const [open, setOpen] = useState<string | null>(null);
   if (rows.length === 0) return <Empty msg="Standings appear once matches are played." />;
   const cols = '28px 1fr 34px 34px 34px 42px 52px';
+  const oversPer = 10; // men's: 5 pairs × 2 overs per innings
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 4, padding: '10px 12px', borderBottom: '1px solid var(--border)', color: 'var(--text-3)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -426,19 +428,34 @@ function StandingsTable({ rows, finalists }: { rows: MensStandingRow[]; finalist
       </div>
       {rows.map((r, i) => {
         const isFinalist = finalists.includes(r.team_id);
+        const isOpen = open === r.team_id;
+        const overs = r.played * oversPer;
         return (
-          <div key={r.team_id} style={{ display: 'grid', gridTemplateColumns: cols, gap: 4, padding: '11px 12px', borderBottom: i < rows.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center', background: isFinalist ? 'rgba(255,153,51,0.06)' : 'transparent' }}>
-            <span style={{ color: isFinalist ? ACCENT : 'var(--text-3)', fontSize: 13, fontWeight: 700 }}>{i + 1}</span>
-            <span style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600 }}>{mensTeamName(r.team_id)}</span>
-            <span style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{r.played}</span>
-            <span style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{r.won}</span>
-            <span style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{r.lost}</span>
-            <span style={{ textAlign: 'center', color: 'var(--text)', fontSize: 14, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{r.points}</span>
-            <span style={{ textAlign: 'right', color: 'var(--text-3)', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>{r.nrr >= 0 ? '+' : ''}{r.nrr.toFixed(2)}</span>
+          <div key={r.team_id} style={{ borderBottom: i < rows.length - 1 ? '1px solid var(--border)' : 'none', background: isFinalist ? 'rgba(255,153,51,0.06)' : 'transparent' }}>
+            <div onClick={() => setOpen(isOpen ? null : r.team_id)} style={{ display: 'grid', gridTemplateColumns: cols, gap: 4, padding: '11px 12px', alignItems: 'center', cursor: 'pointer' }}>
+              <span style={{ color: isFinalist ? ACCENT : 'var(--text-3)', fontSize: 13, fontWeight: 700 }}>{i + 1}</span>
+              <span style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600 }}>{mensTeamName(r.team_id)} <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{isOpen ? '▾' : 'ⓘ'}</span></span>
+              <span style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{r.played}</span>
+              <span style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{r.won}</span>
+              <span style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{r.lost}</span>
+              <span style={{ textAlign: 'center', color: 'var(--text)', fontSize: 14, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{r.points}</span>
+              <span style={{ textAlign: 'right', color: 'var(--text-3)', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>{r.nrr >= 0 ? '+' : ''}{r.nrr.toFixed(2)}</span>
+            </div>
+            {isOpen && (
+              <div style={{ padding: '0 12px 12px', color: 'var(--text-3)', fontSize: 11.5, lineHeight: 1.7 }}>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '9px 12px' }}>
+                  <div>Runs <b style={{ color: 'var(--green)' }}>scored: {r.rf}</b> · Runs <b style={{ color: 'var(--red)' }}>conceded: {r.ra}</b></div>
+                  <div>Over {overs} overs ({r.played} × {oversPer})</div>
+                  <div style={{ color: 'var(--text-2)', marginTop: 3 }}>
+                    NRR = {r.rf}/{overs} − {r.ra}/{overs} = {(r.rf / overs).toFixed(2)} − {(r.ra / overs).toFixed(2)} = <b style={{ color: 'var(--text)' }}>{r.nrr >= 0 ? '+' : ''}{r.nrr.toFixed(2)}</b>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
-      <p style={{ color: 'var(--text-3)', fontSize: 11, padding: '10px 12px', margin: 0 }}>Top 2 (highlighted) advance to the final.</p>
+      <p style={{ color: 'var(--text-3)', fontSize: 11, padding: '10px 12px', margin: 0 }}>Top 2 (highlighted) advance to the final · Tap a team (ⓘ) to see its NRR working.</p>
     </div>
   );
 }

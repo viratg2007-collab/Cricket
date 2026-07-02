@@ -765,6 +765,8 @@ function FixtureRow({ rec, num, ov, bracket, navigate, showGroup }: {
 
 function GroupStandings({ table }: { table: GroupTable }) {
   const accent = table.key === 'A' ? 'var(--green)' : table.key === 'B' ? 'var(--blue)' : table.key === 'C' ? 'var(--green)' : 'var(--blue)';
+  const [open, setOpen] = useState<string | null>(null);
+  const oversPer = 12; // women's: 6 pairs × 2 overs per innings
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
       <div style={{ padding: '11px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -783,20 +785,30 @@ function GroupStandings({ table }: { table: GroupTable }) {
         // Round-2 groups (C/D): finalists come from the OVERALL table, not the group
         // winner — so don't imply qualification here.
         const qualifies = i === 0 && row.played > 0 && (table.key === 'A' || table.key === 'B');
+        const isOpen = open === row.team_id;
+        const overs = row.played * oversPer;
         return (
-          <div key={row.team_id} style={{
-            display: 'grid', gridTemplateColumns: '16px 1fr 20px 20px 20px 20px 28px 50px', padding: '9px 12px', gap: 4,
-            borderBottom: i < table.rows.length - 1 ? '1px solid var(--border-2)' : 'none',
-            background: qualifies ? 'rgba(255,153,51,0.05)' : 'transparent',
-          }}>
-            <span style={{ fontSize: 12, color: qualifies ? 'var(--amber)' : 'var(--text-3)', fontWeight: qualifies ? 700 : 400 }}>{i + 1}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: qualifies ? 'var(--text)' : 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teamName(row.team_id)}</span>
-            <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{row.played}</span>
-            <span style={{ fontSize: 11, color: row.won > 0 ? 'var(--green)' : 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: row.won > 0 ? 700 : 400 }}>{row.won}</span>
-            <span style={{ fontSize: 11, color: row.lost > 0 ? 'var(--red)' : 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{row.lost}</span>
-            <span style={{ fontSize: 11, color: row.tied > 0 ? 'var(--amber)' : 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{row.tied}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: qualifies ? 'var(--amber)' : 'var(--text)' }}>{row.points}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: nrrColor }}>{nrrStr}</span>
+          <div key={row.team_id} style={{ borderBottom: i < table.rows.length - 1 ? '1px solid var(--border-2)' : 'none', background: qualifies ? 'rgba(255,153,51,0.05)' : 'transparent' }}>
+            <div onClick={() => setOpen(isOpen ? null : row.team_id)} style={{
+              display: 'grid', gridTemplateColumns: '16px 1fr 20px 20px 20px 20px 28px 50px', padding: '9px 12px', gap: 4, cursor: 'pointer',
+            }}>
+              <span style={{ fontSize: 12, color: qualifies ? 'var(--amber)' : 'var(--text-3)', fontWeight: qualifies ? 700 : 400 }}>{i + 1}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: qualifies ? 'var(--text)' : 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teamName(row.team_id)} <span style={{ color: 'var(--text-3)', fontSize: 10 }}>{isOpen ? '▾' : 'ⓘ'}</span></span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{row.played}</span>
+              <span style={{ fontSize: 11, color: row.won > 0 ? 'var(--green)' : 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: row.won > 0 ? 700 : 400 }}>{row.won}</span>
+              <span style={{ fontSize: 11, color: row.lost > 0 ? 'var(--red)' : 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{row.lost}</span>
+              <span style={{ fontSize: 11, color: row.tied > 0 ? 'var(--amber)' : 'var(--text-3)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{row.tied}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: qualifies ? 'var(--amber)' : 'var(--text)' }}>{row.points}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: nrrColor }}>{nrrStr}</span>
+            </div>
+            {isOpen && row.played > 0 && (
+              <div style={{ padding: '0 12px 10px' }}>
+                <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '9px 12px', fontSize: 11.5, lineHeight: 1.7, color: 'var(--text-3)' }}>
+                  <div>Runs <b style={{ color: 'var(--green)' }}>scored: {row.rf}</b> · Runs <b style={{ color: 'var(--red)' }}>conceded: {row.ra}</b> over {overs} overs ({row.played} × {oversPer})</div>
+                  <div style={{ color: 'var(--text-2)', marginTop: 3 }}>NRR = {row.rf}/{overs} − {row.ra}/{overs} = {(row.rf / overs).toFixed(2)} − {(row.ra / overs).toFixed(2)} = <b style={{ color: 'var(--text)' }}>{row.nrr >= 0 ? '+' : ''}{row.nrr.toFixed(3)}</b></div>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
