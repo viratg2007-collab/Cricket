@@ -801,11 +801,15 @@ function GroupStandings({ table }: { table: GroupTable }) {
               <span style={{ fontSize: 13, fontWeight: 700, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: qualifies ? 'var(--amber)' : 'var(--text)' }}>{row.points}</span>
               <span style={{ fontSize: 11, fontWeight: 600, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: nrrColor }}>{nrrStr}</span>
             </div>
-            {isOpen && row.played > 0 && (
+            {isOpen && (
               <div style={{ padding: '0 12px 10px' }}>
                 <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '9px 12px', fontSize: 11.5, lineHeight: 1.7, color: 'var(--text-3)' }}>
-                  <div>Runs <b style={{ color: 'var(--green)' }}>scored: {row.rf}</b> · Runs <b style={{ color: 'var(--red)' }}>conceded: {row.ra}</b> over {overs} overs ({row.played} × {oversPer})</div>
-                  <div style={{ color: 'var(--text-2)', marginTop: 3 }}>NRR = {row.rf}/{overs} − {row.ra}/{overs} = {(row.rf / overs).toFixed(2)} − {(row.ra / overs).toFixed(2)} = <b style={{ color: 'var(--text)' }}>{row.nrr >= 0 ? '+' : ''}{row.nrr.toFixed(3)}</b></div>
+                  {row.played === 0 ? (
+                    <div>No matches played yet — NRR appears after the first game.</div>
+                  ) : (<>
+                    <div>Runs <b style={{ color: 'var(--green)' }}>scored: {row.rf}</b> · Runs <b style={{ color: 'var(--red)' }}>conceded: {row.ra}</b> over {overs} overs ({row.played} × {oversPer})</div>
+                    <div style={{ color: 'var(--text-2)', marginTop: 3 }}>NRR = {row.rf}/{overs} − {row.ra}/{overs} = {(row.rf / overs).toFixed(2)} − {(row.ra / overs).toFixed(2)} = <b style={{ color: 'var(--text)' }}>{row.nrr >= 0 ? '+' : ''}{row.nrr.toFixed(3)}</b></div>
+                  </>)}
                 </div>
               </div>
             )}

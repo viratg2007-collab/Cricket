@@ -444,11 +444,15 @@ function StandingsTable({ rows, finalists }: { rows: MensStandingRow[]; finalist
             {isOpen && (
               <div style={{ padding: '0 12px 12px', color: 'var(--text-3)', fontSize: 11.5, lineHeight: 1.7 }}>
                 <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '9px 12px' }}>
-                  <div>Runs <b style={{ color: 'var(--green)' }}>scored: {r.rf}</b> · Runs <b style={{ color: 'var(--red)' }}>conceded: {r.ra}</b></div>
-                  <div>Over {overs} overs ({r.played} × {oversPer})</div>
-                  <div style={{ color: 'var(--text-2)', marginTop: 3 }}>
-                    NRR = {r.rf}/{overs} − {r.ra}/{overs} = {(r.rf / overs).toFixed(2)} − {(r.ra / overs).toFixed(2)} = <b style={{ color: 'var(--text)' }}>{r.nrr >= 0 ? '+' : ''}{r.nrr.toFixed(2)}</b>
-                  </div>
+                  {r.played === 0 ? (
+                    <div>No matches played yet — NRR appears after the first game.</div>
+                  ) : (<>
+                    <div>Runs <b style={{ color: 'var(--green)' }}>scored: {r.rf}</b> · Runs <b style={{ color: 'var(--red)' }}>conceded: {r.ra}</b></div>
+                    <div>Over {overs} overs ({r.played} × {oversPer})</div>
+                    <div style={{ color: 'var(--text-2)', marginTop: 3 }}>
+                      NRR = {r.rf}/{overs} − {r.ra}/{overs} = {(r.rf / overs).toFixed(2)} − {(r.ra / overs).toFixed(2)} = <b style={{ color: 'var(--text)' }}>{r.nrr >= 0 ? '+' : ''}{r.nrr.toFixed(2)}</b>
+                    </div>
+                  </>)}
                 </div>
               </div>
             )}
