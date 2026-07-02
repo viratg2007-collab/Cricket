@@ -13,7 +13,7 @@ const BASE=g('VITE_SUPABASE_URL').replace(/\/$/,'')+'/rest/v1';
 const KEY=g('VITE_SUPABASE_ANON_KEY');
 const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
 const SENT='00000000-0000-0000-00f9-';
-let idc=0; const nid=()=>SENT+(idc++).toString(16).padStart(12,'0');
+let idc=Math.floor(Math.random()*0xffffff); const nid=()=>SENT+(idc++).toString(16).padStart(12,'0');
 const posted=[];
 let seed=7; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
 
