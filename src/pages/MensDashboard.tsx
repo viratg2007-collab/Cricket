@@ -191,6 +191,12 @@ function MatchCard({ rec, matchNum, status, scores, isNext, actionLabel, notRead
         )}
       </div>
 
+      {rec.time && !isDone && (
+        <p style={{ color: 'var(--blue)', fontSize: 11, fontWeight: 700, margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          🕐 {rec.day ? `${rec.day} · ` : ''}{rec.timeWindow ?? rec.time}
+        </p>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: (actionLabel || notReadyNote) ? 14 : 0 }}>
         {[
           { id: home, name: homeName, score: scores?.s1 ?? null },

@@ -86,17 +86,18 @@ export type MRound = 'rr' | 'final';
 export interface MensMatchRecord {
   match: Match; innings1_id: string; innings2_id: string;
   round: MRound; homeSlot: string; awaySlot: string; roundLabel: string;
+  day?: string; time?: string; timeWindow?: string;
 }
 
-interface MDef { n: number; round: MRound; home: string; away: string; label: string; }
+interface MDef { n: number; round: MRound; home: string; away: string; label: string; day?: string; time?: string; timeWindow?: string; }
 const MDEFS: MDef[] = [
-  { n: 1, round: 'rr', home: TI.MNW + '', away: TI.SUN + '', label: 'Round Robin' }, // MN Warriors v Antwerp Sunrisers
-  { n: 2, round: 'rr', home: TI.MI + '',  away: TI.SPK + '', label: 'Round Robin' }, // Mumbai Indians v Sparkle Strikers
-  { n: 3, round: 'rr', home: TI.MNW + '', away: TI.MI + '',  label: 'Round Robin' }, // MN Warriors v Mumbai Indians
-  { n: 4, round: 'rr', home: TI.SUN + '', away: TI.SPK + '', label: 'Round Robin' }, // Antwerp Sunrisers v Sparkle Strikers
-  { n: 5, round: 'rr', home: TI.SUN + '', away: TI.MI + '',  label: 'Round Robin' }, // Antwerp Sunrisers v Mumbai Indians
-  { n: 6, round: 'rr', home: TI.MNW + '', away: TI.SPK + '', label: 'Round Robin' }, // MN Warriors v Sparkle Strikers
-  { n: 7, round: 'final', home: 'F1', away: 'F2', label: 'Final' },                   // 1st v 2nd
+  { n: 1, round: 'rr', home: TI.MNW + '', away: TI.SUN + '', label: 'Round Robin', day: 'Fri 3 Jul', time: '5:00 PM', timeWindow: '5:00 – 6:25 PM' }, // MN Warriors v Antwerp Sunrisers
+  { n: 2, round: 'rr', home: TI.MI + '',  away: TI.SPK + '', label: 'Round Robin', day: 'Fri 3 Jul', time: '6:30 PM', timeWindow: '6:30 – 7:55 PM' }, // Mumbai Indians v Sparkle Strikers
+  { n: 3, round: 'rr', home: TI.MNW + '', away: TI.MI + '',  label: 'Round Robin', day: 'Sat 4 Jul', time: '11:30 AM', timeWindow: '11:30 AM – 12:55 PM' }, // MN Warriors v Mumbai Indians
+  { n: 4, round: 'rr', home: TI.SUN + '', away: TI.SPK + '', label: 'Round Robin', day: 'Sat 4 Jul', time: '3:00 PM',  timeWindow: '3:00 – 4:25 PM' }, // Antwerp Sunrisers v Sparkle Strikers
+  { n: 5, round: 'rr', home: TI.SUN + '', away: TI.MI + '',  label: 'Round Robin', day: 'Sun 5 Jul', time: '8:30 AM',  timeWindow: '8:30 – 9:55 AM' },  // Antwerp Sunrisers v Mumbai Indians
+  { n: 6, round: 'rr', home: TI.MNW + '', away: TI.SPK + '', label: 'Round Robin', day: 'Sun 5 Jul', time: '10:00 AM', timeWindow: '10:00 – 11:25 AM' }, // MN Warriors v Sparkle Strikers
+  { n: 7, round: 'final', home: 'F1', away: 'F2', label: 'Final', day: 'Sun 5 Jul', time: '4:10 PM', timeWindow: '4:10 – 5:35 PM' },                     // 1st v 2nd
 ];
 
 // Resolve a slot to a team id. RR slots are team indices; F1/F2 come from standings.
@@ -127,6 +128,9 @@ function buildMensRecord(def: MDef, finalists: string[]): MensMatchRecord {
     homeSlot: def.home,
     awaySlot: def.away,
     roundLabel: def.label,
+    day: def.day,
+    time: def.time,
+    timeWindow: def.timeWindow,
   };
 }
 

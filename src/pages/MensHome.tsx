@@ -403,6 +403,11 @@ function MatchRow({ base, num, overviews }: { base: typeof MENS_MATCHES[number];
         {status === 'complete' && <span style={{ color: 'var(--text-3)', fontSize: 10, fontWeight: 600 }}>· ✓ Done</span>}
         {status === 'scheduled' && <span style={{ color: 'var(--text-3)', fontSize: 10, fontWeight: 600 }}>· Upcoming</span>}
       </div>
+      {rec.time && status !== 'complete' && (
+        <p style={{ color: ACCENT, fontSize: 10.5, fontWeight: 700, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          🕐 {rec.day ? `${rec.day} · ` : ''}{rec.timeWindow ?? rec.time}
+        </p>
+      )}
       <MatchLine ov={ov} home={rec.match.home_team_id} away={rec.match.away_team_id} homeSlot={rec.homeSlot} awaySlot={rec.awaySlot} />
     </div>
   );
