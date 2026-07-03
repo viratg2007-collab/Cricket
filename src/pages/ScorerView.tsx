@@ -607,7 +607,7 @@ export function ScorerView() {
       {extraModal === 'wicket_type' && (
         <WicketModal
           bowlingTeamId={innings.bowling_team_id}
-          onConfirm={(wt, fielderId) => { record(0,'none',0,true,wt,fielderId); setExtraModal('none'); }}
+          onConfirm={(wt, fielderId, runsCompleted = 0) => { record(runsCompleted,'none',0,true,wt,fielderId); setExtraModal('none'); }}
           onCancel={() => setExtraModal('none')}
         />
       )}
@@ -666,11 +666,12 @@ function Sheet({ children }: { children: React.ReactNode }) {
 
 function WicketModal({ bowlingTeamId, onConfirm, onCancel }: {
   bowlingTeamId: string;
-  onConfirm: (wt: WicketType | undefined, fielderId?: string) => void;
+  onConfirm: (wt: WicketType | undefined, fielderId?: string, runsCompleted?: number) => void;
   onCancel: () => void;
 }) {
-  const [step, setStep] = useState<'type' | 'fielder'>('type');
+  const [step, setStep] = useState<'type' | 'fielder' | 'runs'>('type');
   const [pendingType, setPendingType] = useState<WicketType | undefined>();
+  const [pendingFielder, setPendingFielder] = useState<string | undefined>();
 
   const needsFielder = (wt: WicketType) => wt === 'caught' || wt === 'run_out' || wt === 'stumped';
   const bowlingPlayers = anyPlayersOfTeam(bowlingTeamId);
@@ -678,6 +679,44 @@ function WicketModal({ bowlingTeamId, onConfirm, onCancel }: {
   function handleTypeSelect(wt: WicketType) {
     if (needsFielder(wt)) { setPendingType(wt); setStep('fielder'); }
     else onConfirm(wt);
+  }
+
+  // After the fielder is chosen: a run-out can have runs completed before the
+  // dismissal → ask for them. Other dismissals finish immediately.
+  function afterFielder(fielderId?: string) {
+    if (pendingType === 'run_out') { setPendingFielder(fielderId); setStep('runs'); }
+    else onConfirm(pendingType, fielderId);
+  }
+
+  if (step === 'runs') {
+    return (
+      <Sheet>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <button onClick={() => setStep('fielder')} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: 20, padding: '0 4px', lineHeight: 1 }}>←</button>
+          <p style={{ color: 'var(--text)', fontWeight: 700, fontSize: 16, margin: 0 }}>Run out — runs completed?</p>
+        </div>
+        <p style={{ color: 'var(--text-3)', fontSize: 13, margin: '0 0 16px', paddingLeft: 34 }}>Runs the batters finished before the run out (0 if run out on the 1st run).</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 12 }}>
+          {[0, 1, 2, 3].map(n => (
+            <button key={n} onClick={() => onConfirm('run_out', pendingFielder, n)} className="tap" style={{
+              aspectRatio: '1', borderRadius: '50%',
+              background: n === 0 ? 'var(--surface-2)' : 'var(--green-2)',
+              border: `1px solid ${n === 0 ? 'var(--border)' : 'rgba(255,153,51,0.4)'}`, color: 'var(--text)',
+              fontWeight: 800, fontSize: 20, cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+            }}>
+              <span>{n}</span>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-3)' }}>{n} − 2 = {n - 2}</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={onCancel} style={{
+          width: '100%', padding: '11px', borderRadius: 10,
+          background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)',
+          fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+        }}>Cancel</button>
+      </Sheet>
+    );
   }
 
   if (step === 'fielder') {
@@ -690,7 +729,7 @@ function WicketModal({ bowlingTeamId, onConfirm, onCancel }: {
         </div>
         <div style={{ maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
           {bowlingPlayers.map(p => (
-            <button key={p.id} onClick={() => onConfirm(pendingType, p.id)} className="tap" style={{
+            <button key={p.id} onClick={() => afterFielder(p.id)} className="tap" style={{
               padding: '13px 14px', borderRadius: 10, textAlign: 'left',
               background: 'var(--surface-2)', border: '1px solid var(--border)',
               color: 'var(--text)', fontWeight: 500, fontSize: 14,
@@ -701,7 +740,7 @@ function WicketModal({ bowlingTeamId, onConfirm, onCancel }: {
             </button>
           ))}
         </div>
-        <button onClick={() => onConfirm(pendingType, undefined)} style={{
+        <button onClick={() => afterFielder(undefined)} style={{
           width: '100%', padding: '11px', borderRadius: 10, marginBottom: 8,
           background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)',
           fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
