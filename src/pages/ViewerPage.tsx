@@ -655,6 +655,9 @@ function ScorecardTab({ derived, pairs, settings, activeDel }: {
   const extras = activeDel.filter(d => !d.is_deleted && d.extra_type !== 'none' && d.extra_type !== 'strike_override')
     .reduce((s, d) => s + d.extra_value, 0);
   const totalLegal = activeDel.filter(d => d.legal_ball).length;
+  // Which pairs have actually come out to bat — so upcoming pairs don't show a
+  // default-guess pairing (which can duplicate a player who already batted).
+  const battedPairIds = new Set(activeDel.filter(d => !d.is_deleted && d.striker_id).map(d => d.pair_id));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -669,15 +672,23 @@ function ScorecardTab({ derived, pairs, settings, activeDel }: {
         {[...pairs].sort((a, b) => a.pair_number - b.pair_number).map(pair => {
           const pairTotal = derived.pair_totals[pair.id] ?? 0;
           const isCurrent = pair.id === derived.current_pair?.id;
+          const hasBatted = battedPairIds.has(pair.id) || isCurrent;
           return (
             <div key={pair.id} style={{ marginBottom: 10, background: isCurrent ? 'rgba(255,153,51,0.04)' : 'transparent', borderRadius: isCurrent ? 8 : 0, padding: isCurrent ? '4px 6px' : '0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ color: 'var(--text-3)', fontSize: 11, fontWeight: 600 }}>Pair {pair.pair_number}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: pairTotal < 0 ? 'var(--red)' : 'var(--green)' }}>
-                  {pairTotal >= 0 ? '+' : ''}{pairTotal}
-                </span>
+                {hasBatted && (
+                  <span style={{ fontSize: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: pairTotal < 0 ? 'var(--red)' : 'var(--green)' }}>
+                    {pairTotal >= 0 ? '+' : ''}{pairTotal}
+                  </span>
+                )}
               </div>
-              {[pair.player1_id, pair.player2_id].map(pid => {
+              {!hasBatted && (
+                <div style={{ padding: '4px 0', borderBottom: '1px solid var(--border-2)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>Yet to bat</span>
+                </div>
+              )}
+              {hasBatted && [pair.player1_id, pair.player2_id].map(pid => {
                 const p = getPlayer(pid); if (!p) return null;
                 const isStriker = derived.striker_id === pid;
                 const balls = derived.batter_balls[pid] ?? 0;

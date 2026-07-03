@@ -1,0 +1,11 @@
+import puppeteer from 'puppeteer-core';
+const CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const b=await puppeteer.launch({executablePath:CHROME,headless:'new',args:['--no-sandbox','--hide-scrollbars']});
+const p=await b.newPage(); await p.setViewport({width:390,height:2400,deviceScaleFactor:2,isMobile:true});
+await p.goto('https://aicc-aia-cricket.com/match/00000000-0000-0000-0004-000000000066',{waitUntil:'networkidle2'});
+await new Promise(r=>setTimeout(r,3500));
+await p.evaluate(()=>{for(const el of document.querySelectorAll('button')){if(el.textContent.trim()==='Scorecard'){el.click();return;}}});
+await new Promise(r=>setTimeout(r,2000));
+await p.screenshot({path:'/tmp/sc_fixed.png'});
+console.log(await p.evaluate(()=>{const t=document.body.innerText; const i=t.indexOf('Pair 5'); return i<0?'no pair5 yet': t.slice(i, i+120).replace(/\n+/g,' | ');}));
+await b.close();
