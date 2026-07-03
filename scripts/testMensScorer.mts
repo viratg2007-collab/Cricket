@@ -38,7 +38,7 @@ async function countIn(table: string, ids: string[]) {
   const rec = getMensMatch(MENS_MATCHES[0].match.id)!;
   const batPair = mensPairs(MENS_TEAMS[0].id, rec.match.id)[0];
   const bowler = MENS_PLAYERS.find(p => p.team_id === MENS_TEAMS[1].id)!;
-  const testId = '00000000-0000-0000-00ff-000000000001';
+  const testId = '00000000-0000-0000-00ff-0000'+Math.floor(Math.random()*0xffffffff).toString(16).padStart(8,'0');
 
   await fetch(`${BASE}/deliveries?id=eq.${testId}`, { method: 'DELETE', headers: H });
 

@@ -12,7 +12,7 @@ import { anyPar, anySchedule, anyPlayersOfTeam, anyMatchRecord, isMensId } from 
 import { getCompletedMatchIds, recordMatchComplete, setLiveMatchId, getEffectiveStatus } from '../lib/matchState';
 import type { ExtraType, WicketType } from '../lib/types';
 
-type ExtraModal = 'none' | 'bye' | 'leg_bye' | 'wicket_type';
+type ExtraModal = 'none' | 'bye' | 'leg_bye' | 'wicket_type' | 'wide' | 'no_ball';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -532,8 +532,8 @@ export function ScorerView() {
 
         {/* Extras row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-          <ExtraBtn label={`WIDE +${settings.wide_value}`} onClick={() => record(0,'wide',settings.wide_value,false)} color="orange" />
-          <ExtraBtn label={`NO BALL +${settings.no_ball_value}`} onClick={() => record(0,'no_ball',settings.no_ball_value,false)} color="orange" />
+          <ExtraBtn label={`WIDE +${settings.wide_value}`} onClick={() => setExtraModal('wide')} color="orange" />
+          <ExtraBtn label={`NO BALL +${settings.no_ball_value}`} onClick={() => setExtraModal('no_ball')} color="orange" />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
           <ExtraBtn label="BYE" onClick={() => setExtraModal('bye')} color="muted" />
@@ -615,6 +615,19 @@ export function ScorerView() {
         <RunsModal
           label={extraModal === 'bye' ? 'Bye' : 'Leg Bye'}
           onConfirm={n => { record(0, extraModal === 'bye' ? 'bye' : 'leg_bye', n, false); setExtraModal('none'); }}
+          onCancel={() => setExtraModal('none')}
+        />
+      )}
+      {(extraModal === 'wide' || extraModal === 'no_ball') && (
+        <ExtraRunsModal
+          label={extraModal === 'wide' ? 'Wide' : 'No Ball'}
+          base={extraModal === 'wide' ? settings.wide_value : settings.no_ball_value}
+          onConfirm={ran => {
+            const type: ExtraType = extraModal === 'wide' ? 'wide' : 'no_ball';
+            const base = extraModal === 'wide' ? settings.wide_value : settings.no_ball_value;
+            record(0, type, base + ran, false);
+            setExtraModal('none');
+          }}
           onCancel={() => setExtraModal('none')}
         />
       )}
@@ -724,6 +737,35 @@ function WicketModal({ bowlingTeamId, onConfirm, onCancel }: {
         background: 'var(--red-2)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5',
         fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
       }}>Wicket (skip type)</button>
+      <button onClick={onCancel} style={{
+        width: '100%', padding: '12px', borderRadius: 10,
+        background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)',
+        fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+      }}>Cancel</button>
+    </Sheet>
+  );
+}
+
+// Wide / No-ball: base penalty + any runs the batters actually ran (0 = just the extra).
+function ExtraRunsModal({ label, base, onConfirm, onCancel }: { label: string; base: number; onConfirm: (ran: number) => void; onCancel: () => void }) {
+  return (
+    <Sheet>
+      <p style={{ color: 'var(--text)', fontWeight: 700, fontSize: 17, margin: '0 0 4px' }}>{label} +{base}</p>
+      <p style={{ color: 'var(--text-3)', fontSize: 13, margin: '0 0 16px' }}>Did the batters run? Tap 0 for just the {label.toLowerCase()}.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, marginBottom: 12 }}>
+        {[0, 1, 2, 3, 4].map(ran => (
+          <button key={ran} onClick={() => onConfirm(ran)} className="tap" style={{
+            aspectRatio: '1', borderRadius: '50%',
+            background: ran === 0 ? 'var(--green-2)' : 'var(--surface-2)',
+            border: `1px solid ${ran === 0 ? 'rgba(255,153,51,0.4)' : 'var(--border)'}`, color: 'var(--text)',
+            fontWeight: 800, fontSize: 20, cursor: 'pointer', fontFamily: 'inherit',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+          }}>
+            <span>{ran}</span>
+            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-3)' }}>= +{base + ran}</span>
+          </button>
+        ))}
+      </div>
       <button onClick={onCancel} style={{
         width: '100%', padding: '12px', borderRadius: 10,
         background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)',
