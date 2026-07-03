@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   loadTournamentStats, fmtSR, fmtOvers, fmtEcon,
-  type BattingRow, type BowlingRow, type MVPRow, type TournamentStats,
+  type BattingRow, type BowlingRow, type MVPRow, type TournamentStats, type StatsScope,
 } from '../lib/tournamentStats';
 import { supabase, supabaseEnabled } from '../lib/supabase';
-import { PLAYERS, TEAMS } from '../lib/seedData';
+import { anyPlayer, anyTeam } from '../lib/resolve';
 
-function playerName(id: string) { return PLAYERS.find(p => p.id === id)?.name ?? '?'; }
-function playerTeam(id: string) { return TEAMS.find(t => t.id === PLAYERS.find(p => p.id === id)?.team_id)?.short_name ?? '?'; }
+function playerName(id: string) { return anyPlayer(id)?.name ?? '?'; }
+function playerTeam(id: string) { const t = anyPlayer(id)?.team_id; return (t ? anyTeam(t)?.short_name : undefined) ?? '?'; }
 
 type StatId =
   | 'mvp'
@@ -43,15 +43,16 @@ const FIELDING_CATS: Category[] = [
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 
-export function StatsPage() {
+export function StatsPage({ scope = 'womens' }: { scope?: StatsScope } = {}) {
   const [stats, setStats] = useState<TournamentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [view, setView] = useState<'menu' | StatId>('menu');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const homeHref = scope === 'mens' ? '/mens' : '/womens';
 
   function refresh() {
-    loadTournamentStats().then(s => { setStats(s); setLastUpdated(new Date()); setLoading(false); });
+    loadTournamentStats(scope).then(s => { setStats(s); setLastUpdated(new Date()); setLoading(false); });
   }
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export function StatsPage() {
     const onVisible = () => { if (!document.hidden) refresh(); };
     if (supabaseEnabled && supabase) {
       const ch = supabase
-        .channel('stats-page-live')
+        .channel(`stats-page-live-${scope}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries' }, refresh)
         .subscribe();
       // Safety net against dropped realtime
@@ -98,7 +99,7 @@ export function StatsPage() {
       }}>
         <div style={{ position: 'absolute', top: -40, right: -20, width: 200, height: 160, background: 'radial-gradient(ellipse, rgba(255,153,51,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative' }}>
-          <Link to="/womens" style={{ color: 'var(--text-3)', fontSize: 12, textDecoration: 'none', display: 'block', marginBottom: 10 }}>
+          <Link to={homeHref} style={{ color: 'var(--text-3)', fontSize: 12, textDecoration: 'none', display: 'block', marginBottom: 10 }}>
             ← Tournament
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -111,7 +112,7 @@ export function StatsPage() {
             </div>
           </div>
           <p style={{ color: 'var(--text-3)', fontSize: 12, margin: 0 }}>
-            Woman 2026
+            {scope === 'mens' ? "Men's +50 · 2026" : 'Woman 2026'}
             {lastUpdated && <span style={{ opacity: 0.6 }}> · Updated {lastUpdated.toLocaleTimeString()}</span>}
           </p>
         </div>

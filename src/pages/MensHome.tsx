@@ -11,13 +11,13 @@ import { fetchMatchToss, fetchDeliveries } from '../lib/supabase';
 import { deriveMatchState, formatOvers, runRate } from '../lib/engine';
 import type { Delivery } from '../lib/types';
 
-type Tab = 'matches' | 'fixtures' | 'table' | 'squads' | 'stats';
+type Tab = 'matches' | 'fixtures' | 'table' | 'squads';
 
 const ACCENT = 'var(--green)';
 function playerName(id: string) { return mensPlayer(id)?.name ?? 'Unknown'; }
 function teamShortOfPlayer(id: string) { return mensTeamShort(mensPlayer(id)?.team_id ?? ''); }
 
-const TABS: Tab[] = ['matches', 'fixtures', 'table', 'squads', 'stats'];
+const TABS: Tab[] = ['matches', 'fixtures', 'table', 'squads'];
 export function MensHome() {
   const navigate = useNavigate();
   const urlTab = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) as Tab | null;
@@ -134,7 +134,7 @@ export function MensHome() {
 
       {/* Tab bar */}
       <div style={{ display: 'flex', background: 'var(--surface)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        {([['matches', 'Matches'], ['fixtures', 'Fixtures'], ['table', 'Table'], ['squads', 'Squads'], ['stats', 'Stats']] as [Tab, string][]).map(([t, label]) => (
+        {([['matches', 'Matches'], ['fixtures', 'Fixtures'], ['table', 'Table'], ['squads', 'Squads']] as [Tab, string][]).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} style={{
             flex: 1, padding: '14px 2px', background: 'none', border: 'none', cursor: 'pointer',
             fontFamily: 'inherit', fontSize: 11, fontWeight: tab === t ? 700 : 400,
@@ -142,6 +142,12 @@ export function MensHome() {
             borderBottom: tab === t ? `2px solid ${ACCENT}` : '2px solid transparent', letterSpacing: '0.01em',
           }}>{label}</button>
         ))}
+        {/* Full stats page (MVP, batting, bowling, fielding leaderboards) */}
+        <button onClick={() => navigate('/mens/stats')} style={{
+          flex: 1, padding: '14px 2px', background: 'none', border: 'none', cursor: 'pointer',
+          fontFamily: 'inherit', fontSize: 11, fontWeight: 400, color: 'var(--text-3)',
+          borderBottom: '2px solid transparent', letterSpacing: '0.01em',
+        }}>Stats</button>
       </div>
 
       {/* Content */}
@@ -215,7 +221,6 @@ export function MensHome() {
         )}
         {tab === 'table' && <StandingsTable rows={standings} finalists={finalists} />}
         {tab === 'squads' && <Squads />}
-        {tab === 'stats' && <StatsPanel stats={stats} />}
       </div>
 
       {/* Footer / credits */}
@@ -488,42 +493,6 @@ function Squads() {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function StatsPanel({ stats }: { stats: TournamentStats | null }) {
-  if (!stats) return <Empty msg="Loading stats…" />;
-  const topRuns = [...stats.batting].sort((a, b) => b.runs - a.runs).slice(0, 5);
-  const topWkts = [...stats.bowling].filter(b => b.wickets > 0).sort((a, b) => b.wickets - a.wickets).slice(0, 5);
-  const topMvp = [...stats.mvp].slice(0, 5);
-  if (topRuns.length === 0 && topWkts.length === 0) return <Empty msg="Stats appear once matches are played." />;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <StatCard title="🏏 Most Runs" rows={topRuns.map(r => ({ id: r.player_id, main: `${r.runs}`, sub: `${r.balls}b` }))} />
-      <StatCard title="🎯 Most Wickets" rows={topWkts.map(r => ({ id: r.player_id, main: `${r.wickets}`, sub: `${r.runs_conceded}r` }))} />
-      <StatCard title="🏆 MVP" rows={topMvp.map(r => ({ id: r.player_id, main: r.total.toFixed(1), sub: 'pts' }))} />
-    </div>
-  );
-}
-
-function StatCard({ title, rows }: { title: string; rows: { id: string; main: string; sub: string }[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
-      <p style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 800, padding: '12px 14px 8px', margin: 0 }}>{title}</p>
-      {rows.map((r, i) => (
-        <Link key={r.id + i} to={`/player/${r.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderTop: '1px solid var(--border)' }}>
-          <span style={{ color: 'var(--text)', fontSize: 13, fontWeight: i === 0 ? 700 : 500 }}>
-            <span style={{ color: 'var(--text-3)', marginRight: 8, fontSize: 12 }}>{i + 1}</span>{playerName(r.id)}
-            <span style={{ color: 'var(--text-3)', fontSize: 11, marginLeft: 6 }}>{teamShortOfPlayer(r.id)}</span>
-          </span>
-          <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-            <span style={{ color: i === 0 ? 'var(--amber)' : 'var(--text)', fontSize: 15, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{r.main}</span>
-            <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{r.sub}</span>
-          </span>
-        </Link>
-      ))}
     </div>
   );
 }

@@ -1,0 +1,21 @@
+import puppeteer from 'puppeteer-core';
+const CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const M6='/match/00000000-0000-0000-0004-000000000006/score';
+const b=await puppeteer.launch({executablePath:CHROME,headless:'new',args:['--no-sandbox','--hide-scrollbars']});
+const p=await b.newPage(); await p.setViewport({width:390,height:844,deviceScaleFactor:2,isMobile:true});
+const clickText=async(txt)=>p.evaluate(t=>{for(const el of document.querySelectorAll('button')){if(el.textContent.replace(/\s+/g,' ').includes(t)){el.click();return true;}}return false;},txt);
+await p.goto('https://aicc-aia-cricket.com'+M6,{waitUntil:'domcontentloaded'});
+await p.evaluate(()=>sessionStorage.setItem('cricket_scorer_auth','1'));
+await p.reload({waitUntil:'networkidle2'}); await new Promise(r=>setTimeout(r,2500));
+console.log('toss screen?', await p.evaluate(()=>/Who won the toss/.test(document.body.innerText)));
+await clickText('Modi Sarkar'); await new Promise(r=>setTimeout(r,700));
+await clickText('Bat'); await new Promise(r=>setTimeout(r,1500));
+console.log('pair select?', await p.evaluate(()=>/Select 2 players/.test(document.body.innerText)));
+await p.screenshot({path:'/tmp/score_pairselect.png'});
+// pick two Modi players and confirm
+await clickText('Peher Modi'); await new Promise(r=>setTimeout(r,400));
+await clickText('Payal Kothari'); await new Promise(r=>setTimeout(r,400));
+await clickText('Confirm Pair'); await new Promise(r=>setTimeout(r,1500));
+console.log('bowler modal?', await p.evaluate(()=>/Select Bowler/.test(document.body.innerText)));
+await p.screenshot({path:'/tmp/score_bowlermodal.png'});
+await b.close(); console.log('shots done');

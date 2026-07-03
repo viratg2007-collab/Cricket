@@ -121,6 +121,7 @@ export default function App() {
         <Route path="/admin" element={<TournamentPage />} />
         {/* Men's +50 tournament */}
         <Route path="/mens" element={<MensHome />} />
+        <Route path="/mens/stats" element={<StatsPage scope="mens" />} />
         <Route path="/mens/score" element={<MensDashboard />} />
         {/* Shared (resolved by match id) */}
         <Route path="/match/:matchId" element={<ViewerPage />} />
