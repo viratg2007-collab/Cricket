@@ -63,20 +63,22 @@ const atsNames = [
   'Saloni Shah', 'Priti Mehta',
 ];
 
-function makePlayers(teamId: string, offset: number, names: string[]): Player[] {
+// captainName lets a team's captain be someone other than the first-listed player
+// WITHOUT reordering the roster (player IDs are position-based and must stay stable).
+function makePlayers(teamId: string, offset: number, names: string[], captainName?: string): Player[] {
   return names.map((name, i) => ({
     id: playerId(offset + i + 1),
     team_id: teamId,
     name,
     jersey_number: i + 1,
     role: 'allrounder',
-    is_captain: i === 0,
+    is_captain: captainName ? name === captainName : i === 0,
   }));
 }
 
 export const PLAYERS: Player[] = [
   ...makePlayers(TEAM.SS,  0,  ssNames),
-  ...makePlayers(TEAM.NA,  14, naNames),
+  ...makePlayers(TEAM.NA,  14, naNames, 'Hetal Shah'), // captain: Hetal Shah (not first-listed Siya Shah)
   ...makePlayers(TEAM.AS,  28, asNames),
   ...makePlayers(TEAM.MS,  42, msNames),
   ...makePlayers(TEAM.KS,  56, ksNames),
