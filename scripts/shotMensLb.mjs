@@ -1,0 +1,11 @@
+import puppeteer from 'puppeteer-core';
+const CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const b=await puppeteer.launch({executablePath:CHROME,headless:'new',args:['--no-sandbox','--hide-scrollbars']});
+const p=await b.newPage(); await p.setViewport({width:390,height:1700,deviceScaleFactor:2,isMobile:true});
+await p.goto('https://aicc-aia-cricket.com/mens/stats',{waitUntil:'networkidle2'}); await new Promise(r=>setTimeout(r,3500));
+const ok=await p.evaluate(()=>{for(const el of document.querySelectorAll('button')){if(el.textContent.includes('Most Runs')){el.click();return true;}}return false;});
+console.log('clicked Most Runs:', ok);
+await new Promise(r=>setTimeout(r,1500));
+await p.screenshot({path:'/tmp/mens_lb_runs.png'});
+console.log(await p.evaluate(()=>document.body.innerText.replace(/\s+/g,' ').slice(0,200)));
+await b.close();

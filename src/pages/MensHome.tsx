@@ -272,12 +272,22 @@ function PerfCard({ onClick, label, color, name, team, value, sub, gold }: { onC
 function MatchLine({ ov, home, away, homeSlot, awaySlot }: { ov?: MensOverview; home: string; away: string; homeSlot: string; awaySlot: string }) {
   const hName = home ? mensTeamName(home) : mensSlotLabel(homeSlot);
   const aName = away ? mensTeamName(away) : mensSlotLabel(awaySlot);
-  const s1 = ov && ov.status !== 'scheduled' ? ov.s1 : null;
-  const s2 = ov && ov.status !== 'scheduled' ? ov.s2 : null;
-  const winner = ov?.status === 'complete' && s1 != null && s2 != null ? (s1 > s2 ? home : s2 > s1 ? away : null) : null;
+  const live = ov && ov.status !== 'scheduled';
+  // Attribute each innings' score to the team that ACTUALLY batted it (ov.t1/t2),
+  // not to home/away — correct even when the toss flipped the batting order.
+  const scoreOf = (teamId: string): number | null => {
+    if (!live || !teamId) return null;
+    if (teamId === ov!.t1) return ov!.s1;
+    if (teamId === ov!.t2) return ov!.s2;
+    return null;
+  };
+  const hScore = scoreOf(home);
+  const aScore = scoreOf(away);
+  const winner = ov?.status === 'complete' && hScore != null && aScore != null
+    ? (hScore > aScore ? home : aScore > hScore ? away : null) : null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {[{ id: home, name: hName, s: s1 }, { id: away, name: aName, s: s2 }].map((r, i) => (
+      {[{ id: home, name: hName, s: hScore }, { id: away, name: aName, s: aScore }].map((r, i) => (
         <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 15, fontWeight: r.id === winner ? 700 : 500, color: r.id === winner ? 'var(--amber)' : r.id ? 'var(--text)' : 'var(--text-3)' }}>{r.name}</span>
           {r.s != null && <span style={{ fontSize: 17, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: r.id === winner ? 'var(--amber)' : r.s < 0 ? 'var(--red)' : 'var(--text-2)' }}>{r.s}</span>}

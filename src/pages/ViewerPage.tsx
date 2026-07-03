@@ -215,10 +215,21 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
     return () => clearInterval(id);
   }, []);
 
+  // Which team actually batted each innings — derived from the deliveries, so it's
+  // correct even when the toss flipped the batting order (e.g. home team bowls first).
+  const inn1BatTeam = battingTeamFromDeliveries(inn1Del, match.home_team_id);
+  // The second innings is always the OTHER team — deriving from inn2Del would fall
+  // back to away_team_id before innings 2 starts, which is wrong on a toss flip.
+  const inn2BatTeam = inn1BatTeam === match.home_team_id ? match.away_team_id : match.home_team_id;
+
   // Reconstruct pairs from deliveries so cross-device viewers (who only have
-  // deliveries, not the synced pairs table) show the correct batters.
-  const realInn1Pairs = reconstructPairs(inn1Del, inn1Pairs);
-  const realInn2Pairs = reconstructPairs(inn2Del, inn2Pairs);
+  // deliveries, not the synced pairs table) show the correct batters. Use the ACTUAL
+  // batting team's pairs as the base — otherwise a toss-flipped innings falls back to
+  // the wrong team's default players.
+  const inn1Fallback = inn1Pairs[0]?.team_id === inn1BatTeam ? inn1Pairs : anyPairs(inn1BatTeam, matchId);
+  const inn2Fallback = inn2Pairs[0]?.team_id === inn2BatTeam ? inn2Pairs : anyPairs(inn2BatTeam, matchId);
+  const realInn1Pairs = reconstructPairs(inn1Del, inn1Fallback);
+  const realInn2Pairs = reconstructPairs(inn2Del, inn2Fallback);
 
   const derived1 = deriveMatchState(inn1Del, realInn1Pairs, settings);
   const derived2 = deriveMatchState(inn2Del, realInn2Pairs, settings);
@@ -226,9 +237,7 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
   const activeDerived = activeInnings === 1 ? derived1 : derived2;
   const activePairs  = activeInnings === 1 ? realInn1Pairs : realInn2Pairs;
   const activeDel    = activeInnings === 1 ? inn1Del : inn2Del;
-  const battingTeamId = activeInnings === 1
-    ? battingTeamFromDeliveries(inn1Del, match.home_team_id)
-    : battingTeamFromDeliveries(inn2Del, match.away_team_id);
+  const battingTeamId = activeInnings === 1 ? inn1BatTeam : inn2BatTeam;
   const totalLegalBalls = activeDel.filter(d => d.legal_ball).length;
   const hasInn1 = inn1Del.length > 0;
   const hasInn2 = inn2Del.length > 0;
@@ -308,7 +317,7 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
             <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
               {([1, 2] as const).map(n => {
                 const isActive = activeInnings === n;
-                const teamId = n === 1 ? match.home_team_id : match.away_team_id;
+                const teamId = n === 1 ? inn1BatTeam : inn2BatTeam;
                 const d = n === 1 ? derived1 : derived2;
                 const hasData = n === 1 ? hasInn1 : hasInn2;
                 return (
@@ -406,8 +415,8 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
             const inn1Score = derived1.total;
             const inn2Score = derived2.total;
             const winTeamId = inn2Score > inn1Score
-              ? match.away_team_id
-              : inn1Score > inn2Score ? match.home_team_id : null;
+              ? inn2BatTeam
+              : inn1Score > inn2Score ? inn1BatTeam : null;
             const winTeam = winTeamId ? getTeam(winTeamId) : null;
             const margin = Math.abs(inn2Score - inn1Score);
             return (
@@ -439,8 +448,10 @@ function MatchDetail({ matchId, rec }: { matchId: string; rec: NonNullable<Retur
 
       {/* Win Predictor — during a live match (hidden once fully complete) */}
       {totalLegalBalls > 0 && !(derived1.is_complete && derived2.is_complete) && (() => {
-        const firstTeam = battingTeamFromDeliveries(inn1Del, match.home_team_id);
-        const secondTeam = battingTeamFromDeliveries(inn2Del, match.away_team_id);
+        const firstTeam = inn1BatTeam;
+        // The second-innings team is simply the other side — correct even before
+        // innings 2 starts (don't fall back to away_team_id, which breaks on a toss flip).
+        const secondTeam = firstTeam === match.home_team_id ? match.away_team_id : match.home_team_id;
         // Form of the batting team's current pair (in-form batters lift their chase).
         const battingDerived = hasInn2 ? derived2 : derived1;
         const cap = (id: string) => !!getPlayer(id)?.is_captain;
