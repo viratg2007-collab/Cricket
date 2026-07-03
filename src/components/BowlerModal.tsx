@@ -1,16 +1,21 @@
 import { useGame } from '../context/GameContext';
-import { bowlerFigures } from '../lib/engine';
+import { bowlerFigures, formatOvers } from '../lib/engine';
 
 interface Props {
   onSelect: (bowlerId: string) => void;
 }
 
 export function BowlerModal({ onSelect }: Props) {
-  const { state, derived, getPlayer } = useGame();
+  const { state, derived, getPlayer, getTeam } = useGame();
   const settings = state.match.settings;
 
   const activeSlot = state.activeInnings === 1 ? state.inn1 : state.inn2;
   const bowlers = state.players.filter(p => p.team_id === activeSlot.innings.bowling_team_id);
+
+  // Live score so the scorer can see it while picking the bowler.
+  const battingTeamName = getTeam(activeSlot.innings.batting_team_id)?.name ?? '';
+  const legalBalls = activeSlot.deliveries.filter(d => !d.is_deleted && d.legal_ball).length;
+  const oversStr = formatOvers(legalBalls, settings.balls_per_over);
 
   // One bowler per innings may bowl 3 overs; once that slot is taken, everyone else is capped at 2
   const threeOverSlotTaken = Object.keys(derived.bowler_overs).some(
@@ -18,7 +23,22 @@ export function BowlerModal({ onSelect }: Props) {
   );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', zIndex: 50 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 50 }}>
+      {/* Live score — visible in the space above the sheet */}
+      <div style={{ padding: '28px 20px 12px', textAlign: 'center' }}>
+        <p style={{ color: 'rgba(255,153,51,0.8)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 6px' }}>
+          {battingTeamName} batting
+        </p>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
+          <span style={{ fontSize: 56, fontWeight: 900, lineHeight: 1, letterSpacing: '-1.5px', color: derived.total < 0 ? '#fca5a5' : '#fff' }}>{derived.total}</span>
+          <span style={{ fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.3)' }}>/</span>
+          <span style={{ fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>{derived.wickets}</span>
+        </div>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: '8px 0 0', fontVariantNumeric: 'tabular-nums' }}>
+          {oversStr} / {settings.overs_per_innings} overs
+        </p>
+      </div>
+
       <div style={{
         width: '100%', background: 'var(--surface)',
         borderRadius: '20px 20px 0 0', border: '1px solid var(--border)',

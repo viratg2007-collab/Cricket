@@ -1377,15 +1377,29 @@ function PairSelectScreen() {
         borderBottom: '1px solid rgba(255,153,51,0.10)',
         flexShrink: 0,
       }}>
-        <p style={{ color: 'rgba(255,153,51,0.6)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 4px' }}>
-          Innings {state.activeInnings} · {battingTeam?.name}
-        </p>
-        <h1 style={{ color: S.text, fontSize: 22, fontWeight: 800, margin: '0 0 2px', letterSpacing: '-0.4px' }}>
-          Pair {pairNum} of {settings.num_pairs}
-        </h1>
-        <p style={{ color: S.text3, fontSize: 13, margin: 0 }}>
-          Select 2 players to bat together
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+          <div>
+            <p style={{ color: 'rgba(255,153,51,0.6)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 4px' }}>
+              Innings {state.activeInnings} · {battingTeam?.name}
+            </p>
+            <h1 style={{ color: S.text, fontSize: 22, fontWeight: 800, margin: '0 0 2px', letterSpacing: '-0.4px' }}>
+              Pair {pairNum} of {settings.num_pairs}
+            </h1>
+            <p style={{ color: S.text3, fontSize: 13, margin: 0 }}>
+              Select 2 players to bat together
+            </p>
+          </div>
+          {/* Live score, so the scorer sees it while picking the pair */}
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 2 }}>
+              <span style={{ fontSize: 32, fontWeight: 900, lineHeight: 1, color: derived.total < 0 ? '#fca5a5' : S.text }}>{derived.total}</span>
+              <span style={{ fontSize: 15, fontWeight: 400, color: S.text3 }}>/{derived.wickets}</span>
+            </div>
+            <p style={{ color: S.text3, fontSize: 11, margin: '4px 0 0', fontVariantNumeric: 'tabular-nums' }}>
+              {formatOvers(slot.deliveries.filter(d => !d.is_deleted && d.legal_ball).length, settings.balls_per_over)} / {settings.overs_per_innings} ov
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Selected summary bar */}
