@@ -86,8 +86,12 @@ async function fetchRelayState(matchId: string): Promise<{
 function buildLiveState(matchId: string, d1: Delivery[], d2: Delivery[], pairs1Override?: Pair[] | null, pairs2Override?: Pair[] | null, toss?: LiveMatchState['toss']): LiveMatchState | null {
   const rec = getMatchRecord(matchId);
   if (!rec) return null;
-  const pairs1 = reconstructPairs(d1, pairs1Override ?? getPairsForTeam(rec.match.home_team_id, matchId));
-  const pairs2 = reconstructPairs(d2, pairs2Override ?? getPairsForTeam(rec.match.away_team_id, matchId));
+  // Actual batting team per innings from the deliveries — correct even if the toss
+  // flipped the order (home team bowls first). Don't assume innings 1 = home.
+  const inn1BatTeam = PLAYERS.find(p => p.id === d1.find(x => x.striker_id)?.striker_id)?.team_id ?? rec.match.home_team_id;
+  const inn2BatTeam = inn1BatTeam === rec.match.home_team_id ? rec.match.away_team_id : rec.match.home_team_id;
+  const pairs1 = reconstructPairs(d1, pairs1Override ?? getPairsForTeam(inn1BatTeam, matchId));
+  const pairs2 = reconstructPairs(d2, pairs2Override ?? getPairsForTeam(inn2BatTeam, matchId));
   const derived1 = deriveMatchState(d1, pairs1, rec.match.settings);
   const derived2 = d2.length > 0 ? deriveMatchState(d2, pairs2, rec.match.settings) : null;
   const activeInnings: 1 | 2 = derived2 ? 2 : 1;
