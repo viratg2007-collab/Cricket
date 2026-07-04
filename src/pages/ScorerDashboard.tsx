@@ -207,8 +207,8 @@ function OverrideEditor({ onChange }: { onChange: () => void }) {
     setSaving(false); onChange();
   }
 
-  const groupC = [aOrder[0], bOrder[1], bOrder[2]];
-  const groupD = [bOrder[0], aOrder[1], aOrder[2]];
+  const groupC = [aOrder[0], aOrder[1], aOrder[2]]; // Round 2 keeps Group A as Group C
+  const groupD = [bOrder[0], bOrder[1], bOrder[2]]; // Group B as Group D (crossover)
 
   const Selector = ({ order, teams, set }: { order: string[]; teams: string[]; set: (o: string[]) => void }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

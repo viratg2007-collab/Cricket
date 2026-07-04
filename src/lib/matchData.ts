@@ -44,10 +44,9 @@ export function getPairsForTeam(teamId: string, mId: string): Pair[] {
 // ── Tournament structure ────────────────────────────────────────────────────────
 // Round 1: two groups of 3, round-robin (6 matches).
 //   Group A: Kashvat, Anita, Sparkle   Group B: Anay, Modi, Nishant
-// Round 2: reseed into groups C & D by round-1 finishing position, round-robin (6),
-//   points carried forward.
-//   Group C = 1st of A + 2nd of B + 3rd of B
-//   Group D = 1st of B + 2nd of A + 3rd of A
+// Round 2: KEEP the round-1 groups (Group C = Group A, Group D = Group B) and play a
+//   CROSSOVER — each Group C team plays two Group D teams (skipping its same-rank
+//   opponent). Points carried forward.
 // Final: the TWO highest-point teams overall (across all 6, points carried
 //   forward; tie-break NRR). Both finalists may come from the same group.
 //   (super over if the final itself is tied.)
@@ -82,8 +81,9 @@ const S = DEFAULT_SETTINGS;
 interface Def { n: number; round: Round; group?: GroupKey; home: Slot; away: Slot; label: string; day?: string; time?: string; timeWindow?: string; }
 
 // Fixtures in exact play order (per the official schedule).
-// Round 2 seeds: C1 = 1st Group A, C2 = 2nd Group B, C3 = 3rd Group B;
-//                D1 = 1st Group B, D2 = 2nd Group A, D3 = 3rd Group A.
+// Round 2 groups keep the Round 1 groups: C1/C2/C3 = 1st/2nd/3rd of Group A
+// (Anita, Sparkle, Kashvat); D1/D2/D3 = 1st/2nd/3rd of Group B (Modi, Anay, Nishant).
+// Crossover: Ai plays B(i+1) and B(i+2) — never its same-rank opponent.
 const DEFS: Def[] = [
   // ── Round 1 · Day 1 (Sat 4 Jul) — times from the official schedule ──
   { n: 1, round: 1, group: 'A', home: TEAM.KS,  away: TEAM.ATS, label: 'Group A', day: 'Sat 4 Jul', time: '7:00 AM',  timeWindow: '7:00 – 8:40 AM' },   // Kashvat v Anita
@@ -92,13 +92,15 @@ const DEFS: Def[] = [
   { n: 4, round: 1, group: 'B', home: TEAM.AS,  away: TEAM.NA,  label: 'Group B', day: 'Sat 4 Jul', time: '12:00 PM', timeWindow: '12:00 – 2:00 PM' },  // Anay v Nishant (opening ceremony)
   { n: 5, round: 1, group: 'A', home: TEAM.ATS, away: TEAM.SS,  label: 'Group A', day: 'Sat 4 Jul', time: '2:00 PM',  timeWindow: '2:00 – 3:40 PM' },   // Anita v Sparkle
   { n: 6, round: 1, group: 'B', home: TEAM.MS,  away: TEAM.NA,  label: 'Group B', day: 'Sat 4 Jul', time: '3:40 PM',  timeWindow: '3:40 – 5:20 PM' },   // Modi v Nishant
-  // ── Round 2 (play order: C1vC2, D2vD1, D3vD2, C1vC3, C2vC3, D1vD3) ──
-  { n: 7,  round: 2, group: 'C', home: 'A1', away: 'B2', label: 'Group C', day: 'Sat 4 Jul', time: '5:45 PM', timeWindow: '5:45 – 7:25 PM' }, // C1 v C2
-  { n: 8,  round: 2, group: 'D', home: 'A2', away: 'B1', label: 'Group D', day: 'Sat 4 Jul', time: '7:25 PM', timeWindow: '7:25 – 9:05 PM' }, // D2 v D1
-  { n: 9,  round: 2, group: 'D', home: 'A3', away: 'A2', label: 'Group D', day: 'Sun 5 Jul', time: '7:00 AM',  timeWindow: '7:00 – 8:40 AM' }, // D3 v D2
-  { n: 10, round: 2, group: 'C', home: 'A1', away: 'B3', label: 'Group C', day: 'Sun 5 Jul', time: '11:30 AM', timeWindow: '11:30 AM – 1:10 PM' }, // C1 v C3
-  { n: 11, round: 2, group: 'C', home: 'B2', away: 'B3', label: 'Group C', day: 'Sun 5 Jul', time: '1:10 PM',  timeWindow: '1:10 – 2:50 PM' }, // C2 v C3
-  { n: 12, round: 2, group: 'D', home: 'B1', away: 'A3', label: 'Group D', day: 'Sun 5 Jul', time: '2:50 PM',  timeWindow: '2:50 – 4:30 PM' }, // D1 v D3
+  // ── Round 2 · CROSSOVER — Group A (Anita/Sparkle/Kashvat) vs Group B (Modi/Anay/
+  //    Nishant). Each team plays the two opposite-group teams that are NOT its own
+  //    rank. Play order matches the official schedule. ──
+  { n: 7,  round: 2, group: 'C', home: 'A1', away: 'B2', label: 'Round 2', day: 'Sat 4 Jul', time: '5:45 PM', timeWindow: '5:45 – 7:25 PM' }, // Anita v Anay
+  { n: 8,  round: 2, group: 'C', home: 'A2', away: 'B3', label: 'Round 2', day: 'Sat 4 Jul', time: '7:25 PM', timeWindow: '7:25 – 9:05 PM' }, // Sparkle v Nishant
+  { n: 9,  round: 2, group: 'C', home: 'A3', away: 'B1', label: 'Round 2', day: 'Sun 5 Jul', time: '7:00 AM',  timeWindow: '7:00 – 8:40 AM' }, // Kashvat v Modi
+  { n: 10, round: 2, group: 'C', home: 'A1', away: 'B3', label: 'Round 2', day: 'Sun 5 Jul', time: '11:30 AM', timeWindow: '11:30 AM – 1:10 PM' }, // Anita v Nishant
+  { n: 11, round: 2, group: 'C', home: 'A2', away: 'B1', label: 'Round 2', day: 'Sun 5 Jul', time: '1:10 PM',  timeWindow: '1:10 – 2:50 PM' }, // Sparkle v Modi
+  { n: 12, round: 2, group: 'C', home: 'A3', away: 'B2', label: 'Round 2', day: 'Sun 5 Jul', time: '2:50 PM',  timeWindow: '2:50 – 4:30 PM' }, // Kashvat v Anay
   // ── Final ──
   { n: 13, round: 'final', home: 'CW', away: 'DW', label: 'Final', day: 'Sun 5 Jul', time: '5:00 PM', timeWindow: '5:00 – 6:40 PM' },
 ];
@@ -195,8 +197,10 @@ function buildBracket(results: Record<number, MatchResult>): Bracket {
     return EMPTY_BRACKET;
   }
 
-  const groupC = [aRank[0], bRank[1], bRank[2]];
-  const groupD = [bRank[0], aRank[1], aRank[2]];
+  // Round 2 keeps the Round 1 groups (no reseed): Group C = Group A teams, Group D
+  // = Group B teams. Round 2 is a crossover (C teams play D teams).
+  const groupC = [aRank[0], aRank[1], aRank[2]];
+  const groupD = [bRank[0], bRank[1], bRank[2]];
 
   // Round-2 standings carry round-1 points forward: accumulate over all rounds.
   const cRank = tableFor(groupC, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], results).map(r => r.team_id);

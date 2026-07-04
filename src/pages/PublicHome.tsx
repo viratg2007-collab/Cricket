@@ -570,14 +570,14 @@ export function PublicHome() {
               ) : (
                 <>
                   <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 16px' }}>
-                    <p style={{ color: 'var(--text-3)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>How Round 2 was seeded</p>
+                    <p style={{ color: 'var(--text-3)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>Round 2 · Crossover</p>
                     <p style={{ color: 'var(--text-2)', fontSize: 12, margin: '0 0 4px' }}>
-                      <b style={{ color: 'var(--green)' }}>Group C</b> = 1st Group A ({teamShort(bracket.aRank[0])}) + 2nd &amp; 3rd Group B ({teamShort(bracket.bRank[1])}, {teamShort(bracket.bRank[2])})
+                      <b style={{ color: 'var(--green)' }}>Group C</b> = Group A ({teamShort(bracket.groupC[0])}, {teamShort(bracket.groupC[1])}, {teamShort(bracket.groupC[2])})
                     </p>
                     <p style={{ color: 'var(--text-2)', fontSize: 12, margin: 0 }}>
-                      <b style={{ color: 'var(--blue)' }}>Group D</b> = 1st Group B ({teamShort(bracket.bRank[0])}) + 2nd &amp; 3rd Group A ({teamShort(bracket.aRank[1])}, {teamShort(bracket.aRank[2])})
+                      <b style={{ color: 'var(--blue)' }}>Group D</b> = Group B ({teamShort(bracket.groupD[0])}, {teamShort(bracket.groupD[1])}, {teamShort(bracket.groupD[2])})
                     </p>
-                    <p style={{ color: 'var(--text-3)', fontSize: 11, margin: '8px 0 0' }}>Points carried forward from Round 1.</p>
+                    <p style={{ color: 'var(--text-3)', fontSize: 11, margin: '8px 0 0' }}>Group C plays Group D (crossover) · points carried forward from Round 1.</p>
                   </div>
                   {tables.filter(t => t.key === 'C' || t.key === 'D').map(gt => (
                     <GroupStandings key={gt.key} table={gt} />
