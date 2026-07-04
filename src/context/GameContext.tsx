@@ -105,7 +105,7 @@ function loadState(mId: string): GameState | null {
 
 // ── Initial state ─────────────────────────────────────────────────────────────
 
-function buildInitialState(mId: string): GameState {
+export function buildInitialState(mId: string): GameState {
   const rec = resolveRecord(mId);
   if (!rec) throw new Error(`Unknown match: ${mId}`);
 
@@ -163,7 +163,7 @@ function setSlot(state: GameState, slot: Partial<InningsSlot>): GameState {
   return { ...state, [key]: { ...activeSlot(state), ...slot } };
 }
 
-function reducer(state: GameState, action: Action): GameState {
+export function reducer(state: GameState, action: Action): GameState {
   const settings = state.match.settings;
   const slot = activeSlot(state);
   const derived = deriveMatchState(slot.deliveries, slot.pairs, settings);
@@ -293,6 +293,7 @@ function reducer(state: GameState, action: Action): GameState {
       const lastIdx = [...slot.deliveries].reverse().findIndex(d => !d.is_deleted);
       if (lastIdx === -1) return state;
       const realIdx = slot.deliveries.length - 1 - lastIdx;
+      const undone = slot.deliveries[realIdx];
       const newDeliveries = slot.deliveries.map((d, i) =>
         i === realIdx ? { ...d, is_deleted: true } : d
       );
@@ -303,7 +304,14 @@ function reducer(state: GameState, action: Action): GameState {
         innings: { ...slot.innings, status: 'live' },
         final_score: updatedDerived.is_complete ? updatedDerived.total : null,
       };
-      return { ...setSlot(state, newSlot), phase: updatedDerived.is_complete ? 'innings_break' : 'scoring' };
+      // Undoing the last ball of a just-completed over (after a new bowler was
+      // picked for the next over) must put the ORIGINAL bowler back on strike, so
+      // the re-bowled delivery is credited to them — not the newly-selected bowler.
+      return {
+        ...setSlot(state, newSlot),
+        phase: updatedDerived.is_complete ? 'innings_break' : 'scoring',
+        current_bowler_id: undone.bowler_id || state.current_bowler_id,
+      };
     }
 
     case 'DELETE_DELIVERY': {

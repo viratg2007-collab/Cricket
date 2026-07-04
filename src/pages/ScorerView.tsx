@@ -573,13 +573,12 @@ export function ScorerView() {
             <RotateCcw size={15} /> Undo
           </button>
           <button
-            onClick={() => setManualFlip(f => !f)}
+            onClick={() => { dispatch({ type: 'MANUAL_SWAP_STRIKE' }); setManualFlip(false); }}
             className="tap"
             style={{
               padding: '13px 8px', borderRadius: 10,
-              background: manualFlip ? 'rgba(245,158,11,0.15)' : 'var(--surface-2)',
-              border: manualFlip ? '1px solid rgba(245,158,11,0.35)' : '1px solid var(--border)',
-              color: manualFlip ? '#fcd34d' : S.text2,
+              background: 'var(--surface-2)', border: '1px solid var(--border)',
+              color: S.text2,
               fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
