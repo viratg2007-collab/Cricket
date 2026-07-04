@@ -98,7 +98,7 @@ function ScorerRoute() {
   }
 
   if (authState === 'unauthed') {
-    return <Login onLogin={() => setAuthState('authed')} />;
+    return <Login onLogin={() => setAuthState('authed')} subtitle={mens ? "Men's +50 2026 — Scorer Login" : 'Women 2026 — Scorer Login'} />;
   }
 
   return (

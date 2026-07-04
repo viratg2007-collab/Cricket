@@ -7,9 +7,10 @@ const LOCAL_SESSION_KEY = 'cricket_scorer_auth';
 
 interface Props {
   onLogin: () => void;
+  subtitle?: string;
 }
 
-export function Login({ onLogin }: Props) {
+export function Login({ onLogin, subtitle = 'Women 2026 — Scorer Login' }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -61,7 +62,7 @@ export function Login({ onLogin }: Props) {
             Cricket Scorer
           </h1>
           <p style={{ color: 'var(--text-3)', fontSize: 13, margin: '0 0 12px' }}>
-            Women 2026 — Scorer Login
+            {subtitle}
           </p>
           {supabaseEnabled && (
             <span style={{

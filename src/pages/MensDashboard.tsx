@@ -42,7 +42,7 @@ export function MensDashboard() {
     return <div style={{ minHeight: '100dvh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <span style={{ color: 'var(--text-3)', fontSize: 14 }}>Loading…</span></div>;
   }
-  if (auth === 'no') return <Login onLogin={() => setAuth('yes')} />;
+  if (auth === 'no') return <Login onLogin={() => setAuth('yes')} subtitle="Men's +50 2026 — Scorer Login" />;
   return <Dashboard />;
 }
 
