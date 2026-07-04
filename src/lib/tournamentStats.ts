@@ -111,13 +111,25 @@ async function fetchRelayDeliveries(scope: StatsScope): Promise<Delivery[]> {
 
 async function fetchAllSupabaseDeliveries(scope: StatsScope): Promise<Delivery[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('deliveries')
-    .select('*')
-    .eq('is_deleted', false);
-  if (error) { console.error('[stats] fetch failed:', error.message); return []; }
+  // PostgREST caps a single response at 1000 rows, so page through them all —
+  // otherwise the newest matches get silently dropped once the tournament
+  // grows past 1000 deliveries.
+  const PAGE = 1000;
+  const all: Delivery[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('deliveries')
+      .select('*')
+      .eq('is_deleted', false)
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) { console.error('[stats] fetch failed:', error.message); return all; }
+    const rows = (data ?? []) as Delivery[];
+    all.push(...rows);
+    if (rows.length < PAGE) break;
+  }
   const valid = inningsIdsFor(scope);
-  return ((data ?? []) as Delivery[]).filter(d => valid.has(d.innings_id));
+  return all.filter(d => valid.has(d.innings_id));
 }
 
 // ── Core aggregation ──────────────────────────────────────────────────────────
