@@ -70,6 +70,7 @@ type Action =
     }
   | { type: 'UNDO' }
   | { type: 'DELETE_DELIVERY'; delivery_id: string }
+  | { type: 'CHANGE_BOWLER'; bowler_id: string }
   | { type: 'MANUAL_SWAP_STRIKE' }
   | { type: 'START_INNINGS_2' }
   | { type: 'RESET' };
@@ -344,6 +345,17 @@ export function reducer(state: GameState, action: Action): GameState {
       }
 
       return { ...state, inn1: newInn1, inn2: newInn2, activeInnings: nextActiveInnings, phase: nextPhase };
+    }
+
+    case 'CHANGE_BOWLER': {
+      // Correct a wrongly-selected bowler: move every ball already bowled in the
+      // CURRENT over to the chosen bowler (runs/wickets are preserved — only the
+      // bowler credit moves) and make them the active bowler for the rest of it.
+      const currentOver = derived.next_ball.over_number;
+      const newDeliveries = slot.deliveries.map(d =>
+        (!d.is_deleted && d.over_number === currentOver) ? { ...d, bowler_id: action.bowler_id } : d
+      );
+      return { ...setSlot(state, { deliveries: newDeliveries }), current_bowler_id: action.bowler_id };
     }
 
     case 'MANUAL_SWAP_STRIKE': {

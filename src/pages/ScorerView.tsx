@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { RotateCcw, ArrowLeftRight } from 'lucide-react';
+import { RotateCcw, ArrowLeftRight, Pencil } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { BallDot } from '../components/BallDot';
 import { BowlerModal } from '../components/BowlerModal';
@@ -81,6 +81,7 @@ export function ScorerView() {
 
   const [manualFlip, setManualFlip] = useState(false);
   const [extraModal, setExtraModal] = useState<ExtraModal>('none');
+  const [changeBowler, setChangeBowler] = useState(false);
   const [showScorecard, setShowScorecard] = useState(false);
   const [tourBatting, setTourBatting] = useState<{ player_id: string; runs: number; balls: number }[]>([]);
   const [par, setPar] = useState(80);
@@ -483,9 +484,15 @@ export function ScorerView() {
 
         {/* Bowler */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-          <p style={{ margin: 0, fontSize: 13, color: S.text2 }}>
-            <span style={{ color: S.text3 }}>Bowling · </span>
-            <span style={{ fontWeight: 600, color: S.text }}>{bowler?.name ?? '—'}</span>
+          <p style={{ margin: 0, fontSize: 13, color: S.text2, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span><span style={{ color: S.text3 }}>Bowling · </span><span style={{ fontWeight: 600, color: S.text }}>{bowler?.name ?? '—'}</span></span>
+            <button
+              onClick={() => setChangeBowler(true)}
+              className="tap"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: S.text3, fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 7, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              <Pencil size={11} /> Change
+            </button>
           </p>
           {bowler && (
             <span style={{ fontFamily: 'monospace', fontSize: 12, color: S.text3 }}>
@@ -603,6 +610,16 @@ export function ScorerView() {
       {showScorecard && <InlineScorecard />}
 
       {/* ── Modals ── */}
+      {changeBowler && (
+        <ChangeBowlerModal
+          bowlers={state.players.filter(p => p.team_id === innings.bowling_team_id)}
+          currentBowlerId={state.current_bowler_id}
+          derived={derived}
+          overLabel={derived.current_absolute_over}
+          onSelect={id => { dispatch({ type: 'CHANGE_BOWLER', bowler_id: id }); setChangeBowler(false); }}
+          onCancel={() => setChangeBowler(false)}
+        />
+      )}
       {extraModal === 'wicket_type' && (
         <WicketModal
           bowlingTeamId={innings.bowling_team_id}
@@ -777,6 +794,53 @@ function WicketModal({ bowlingTeamId, onConfirm, onCancel }: {
         background: 'var(--red-2)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5',
         fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
       }}>Wicket (skip type)</button>
+      <button onClick={onCancel} style={{
+        width: '100%', padding: '12px', borderRadius: 10,
+        background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)',
+        fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+      }}>Cancel</button>
+    </Sheet>
+  );
+}
+
+// Correct a wrongly-selected bowler for the current over (reassigns this over's balls).
+function ChangeBowlerModal({ bowlers, currentBowlerId, derived, overLabel, onSelect, onCancel }: {
+  bowlers: { id: string; name: string; is_captain?: boolean }[];
+  currentBowlerId: string;
+  derived: { bowler_overs: Record<string, number>; bowler_extra_balls: Record<string, number>; bowler_runs: Record<string, number>; bowler_wickets: Record<string, number> };
+  overLabel: number;
+  onSelect: (id: string) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Sheet>
+      <p style={{ color: 'var(--text)', fontWeight: 700, fontSize: 17, margin: '0 0 4px' }}>Change bowler</p>
+      <p style={{ color: 'var(--text-3)', fontSize: 13, margin: '0 0 14px' }}>
+        Fixes a wrong pick for <b style={{ color: 'var(--text-2)' }}>over {overLabel}</b> — every ball already bowled this over moves to the selected bowler. Runs &amp; wickets are kept.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 320, overflowY: 'auto', marginBottom: 10 }}>
+        {bowlers.map(p => {
+          const o = derived.bowler_overs[p.id] ?? 0, eb = derived.bowler_extra_balls[p.id] ?? 0;
+          const r = derived.bowler_runs[p.id] ?? 0, w = derived.bowler_wickets[p.id] ?? 0;
+          const isCurrent = p.id === currentBowlerId;
+          return (
+            <button key={p.id} onClick={() => onSelect(p.id)} className="tap" style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '13px 16px', borderRadius: 12, textAlign: 'left',
+              background: isCurrent ? 'var(--green-2)' : 'var(--surface-2)',
+              border: `1px solid ${isCurrent ? 'rgba(255,153,51,0.28)' : 'var(--border)'}`,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: isCurrent ? 'var(--green)' : 'var(--text)' }}>
+                {p.name}
+                {p.is_captain && <span style={{ color: 'var(--amber)', fontSize: 11, marginLeft: 6 }}>(C)</span>}
+                {isCurrent && <span style={{ color: 'var(--text-3)', fontSize: 11, marginLeft: 8, fontWeight: 500 }}>current</span>}
+              </span>
+              <span style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-3)' }}>{(o || eb) ? bowlerFigures(o, eb, r, w) : '—'}</span>
+            </button>
+          );
+        })}
+      </div>
       <button onClick={onCancel} style={{
         width: '100%', padding: '12px', borderRadius: 10,
         background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)',

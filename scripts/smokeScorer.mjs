@@ -1,0 +1,10 @@
+import puppeteer from 'puppeteer-core';
+const CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const b=await puppeteer.launch({executablePath:CHROME,headless:'new',args:['--no-sandbox']});
+const p=await b.newPage(); const errs=[];
+p.on('pageerror',e=>errs.push(String(e))); p.on('console',m=>{if(m.type()==='error')errs.push(m.text());});
+await p.goto('https://aicc-aia-cricket.com/score',{waitUntil:'networkidle2'}); await new Promise(r=>setTimeout(r,3000));
+const t=await p.evaluate(()=>document.body.innerText);
+console.log('scorer login loads:', t.includes('Scorer Login')?'YES ✅':'NO ❌');
+console.log('page errors:', errs.filter(e=>!/favicon|manifest|presence/i.test(e)).slice(0,3));
+await b.close();
