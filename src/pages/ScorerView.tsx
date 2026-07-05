@@ -621,10 +621,12 @@ export function ScorerView() {
         <ExtraRunsModal
           label={extraModal === 'wide' ? 'Wide' : 'No Ball'}
           base={extraModal === 'wide' ? settings.wide_value : settings.no_ball_value}
-          onConfirm={ran => {
+          isWide={extraModal === 'wide'}
+          bowlingTeamId={innings.bowling_team_id}
+          onConfirm={(ran, wicketType, fielderId) => {
             const type: ExtraType = extraModal === 'wide' ? 'wide' : 'no_ball';
             const base = extraModal === 'wide' ? settings.wide_value : settings.no_ball_value;
-            record(0, type, base + ran, false);
+            record(0, type, base + ran, !!wicketType, wicketType, fielderId);
             setExtraModal('none');
           }}
           onCancel={() => setExtraModal('none')}
@@ -785,12 +787,83 @@ function WicketModal({ bowlingTeamId, onConfirm, onCancel }: {
 }
 
 // Wide / No-ball: base penalty + any runs the batters actually ran (0 = just the extra).
-function ExtraRunsModal({ label, base, onConfirm, onCancel }: { label: string; base: number; onConfirm: (ran: number) => void; onCancel: () => void }) {
+function ExtraRunsModal({ label, base, isWide, bowlingTeamId, onConfirm, onCancel }: {
+  label: string; base: number; isWide: boolean; bowlingTeamId: string;
+  onConfirm: (ran: number, wicketType?: WicketType, fielderId?: string) => void;
+  onCancel: () => void;
+}) {
+  const [step, setStep] = useState<'main' | 'ro_runs' | 'fielder'>('main');
+  const [pendingType, setPendingType] = useState<WicketType>('run_out');
+  const [pendingRuns, setPendingRuns] = useState(0);
+  const fielders = anyPlayersOfTeam(bowlingTeamId);
+  const lc = label.toLowerCase();
+  const backBtn = { background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: 20, padding: '0 4px', lineHeight: 1 } as const;
+  const ghost = { width: '100%', padding: '11px', borderRadius: 10, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 } as const;
+
+  // ── Pick the fielder (run out / stumped on the extra) ──
+  if (step === 'fielder') {
+    return (
+      <Sheet>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <button onClick={() => setStep('main')} style={backBtn}>←</button>
+          <p style={{ color: 'var(--text)', fontWeight: 700, fontSize: 16, margin: 0 }}>
+            {pendingType === 'stumped' ? 'Stumped by' : 'Run out by'}
+            <span style={{ color: 'var(--text-3)', fontWeight: 500, fontSize: 13 }}> · on {lc}</span>
+          </p>
+        </div>
+        <div style={{ maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+          {fielders.map(p => (
+            <button key={p.id} onClick={() => onConfirm(pendingRuns, pendingType, p.id)} className="tap" style={{
+              padding: '13px 14px', borderRadius: 10, textAlign: 'left',
+              background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)',
+              fontWeight: 500, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span>{p.name}</span>
+              {p.role === 'wicketkeeper' && <span style={{ color: 'var(--text-3)', fontSize: 10, fontWeight: 600 }}>WK</span>}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => onConfirm(pendingRuns, pendingType, undefined)} style={ghost}>Skip — fielder unknown</button>
+        <button onClick={onCancel} style={ghost}>Cancel</button>
+      </Sheet>
+    );
+  }
+
+  // ── Run out: how many runs completed before the dismissal ──
+  if (step === 'ro_runs') {
+    return (
+      <Sheet>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <button onClick={() => setStep('main')} style={backBtn}>←</button>
+          <p style={{ color: 'var(--text)', fontWeight: 700, fontSize: 16, margin: 0 }}>Run out — runs completed?</p>
+        </div>
+        <p style={{ color: 'var(--text-3)', fontSize: 13, margin: '0 0 16px', paddingLeft: 34 }}>Runs the batters finished before the run out (the {lc} +{base} is added automatically).</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 12 }}>
+          {[0, 1, 2, 3].map(n => (
+            <button key={n} onClick={() => { setPendingRuns(n); setStep('fielder'); }} className="tap" style={{
+              aspectRatio: '1', borderRadius: '50%',
+              background: n === 0 ? 'var(--surface-2)' : 'var(--green-2)',
+              border: `1px solid ${n === 0 ? 'var(--border)' : 'rgba(255,153,51,0.4)'}`, color: 'var(--text)',
+              fontWeight: 800, fontSize: 20, cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+            }}>
+              <span>{n}</span>
+              <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-3)' }}>+{base + n} −2</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={onCancel} style={ghost}>Cancel</button>
+      </Sheet>
+    );
+  }
+
+  // ── Main: runs run + optional wicket ──
   return (
     <Sheet>
       <p style={{ color: 'var(--text)', fontWeight: 700, fontSize: 17, margin: '0 0 4px' }}>{label} +{base}</p>
-      <p style={{ color: 'var(--text-3)', fontSize: 13, margin: '0 0 16px' }}>Did the batters run? Tap 0 for just the {label.toLowerCase()}.</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, marginBottom: 12 }}>
+      <p style={{ color: 'var(--text-3)', fontSize: 13, margin: '0 0 16px' }}>Did the batters run? Tap 0 for just the {lc}.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, marginBottom: 16 }}>
         {[0, 1, 2, 3, 4].map(ran => (
           <button key={ran} onClick={() => onConfirm(ran)} className="tap" style={{
             aspectRatio: '1', borderRadius: '50%',
@@ -804,11 +877,20 @@ function ExtraRunsModal({ label, base, onConfirm, onCancel }: { label: string; b
           </button>
         ))}
       </div>
-      <button onClick={onCancel} style={{
-        width: '100%', padding: '12px', borderRadius: 10,
-        background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)',
-        fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
-      }}>Cancel</button>
+      <p style={{ color: 'var(--text-3)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 8px' }}>Wicket on this {lc}?</p>
+      <div style={{ display: 'grid', gridTemplateColumns: isWide ? '1fr 1fr' : '1fr', gap: 8 }}>
+        <button onClick={() => { setPendingType('run_out'); setStep('ro_runs'); }} className="tap" style={{
+          padding: '13px 8px', borderRadius: 10, background: 'var(--red-2)', border: '1px solid rgba(239,68,68,0.25)',
+          color: '#fca5a5', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+        }}>Run out</button>
+        {isWide && (
+          <button onClick={() => { setPendingType('stumped'); setPendingRuns(0); setStep('fielder'); }} className="tap" style={{
+            padding: '13px 8px', borderRadius: 10, background: 'var(--red-2)', border: '1px solid rgba(239,68,68,0.25)',
+            color: '#fca5a5', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+          }}>Stumped</button>
+        )}
+      </div>
+      <button onClick={onCancel} style={ghost}>Cancel</button>
     </Sheet>
   );
 }
